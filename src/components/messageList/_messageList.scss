@@ -1,0 +1,89 @@
+@use "../../variables" as *;
+
+.message-list {
+  max-height: calc(100dvh - 5rem) !important;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 2rem;
+  padding-bottom: 10rem;
+
+  .message {
+    width: fit-content;
+    max-width: 80%;
+    min-width: 33%;
+
+    &:first-child {
+      margin-top: 1rem;
+    }
+
+    .message-text {
+      overflow-wrap: break-word;
+      word-break: break-word;
+      hyphens: auto;
+    }
+
+    &.user {
+      margin-left: auto;
+      background-color: $primary-color-dark;
+
+      .message-user {
+        font-weight: bold;
+        color: $custom-white;
+        text-align: right;
+        margin-left: auto;
+        display: block;
+      }
+
+      .message-text {
+        color: $custom-white;
+        text-align: right;
+        margin-left: auto;
+      }
+    }
+
+    &.other {
+      margin-right: auto;
+      background-color: $secondary-color;
+
+      .message-user {
+        font-weight: bold;
+        color: $custom-black;
+        text-align: left;
+        margin-right: auto;
+        display: block;
+      }
+
+      .message-text {
+        color: $custom-black;
+        text-align: left;
+        margin-right: auto;
+      }
+    }
+
+    .message-time {
+      color: $custom-black;
+      display: block;
+      text-align: right;
+    }
+
+    &.user {
+        .message-time {
+            color: $custom-white;
+            text-align: left;
+        }
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .message-list {
+    padding: 1rem;
+    padding-bottom: 7rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .message-list {
+    padding-bottom: 4rem;
+  }
+}

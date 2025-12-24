@@ -1,0 +1,91 @@
+@use "../../variables" as *;
+
+.chat-container {
+  background-color: $custom-white;
+  background-color: rgba(147, 197, 253, 0.19);
+  padding: 0 !important;
+
+  .chat-header {
+    background-color: $custom-black;
+
+    .title-chat {
+      font-weight: bold;
+      color: $custom-white;
+      text-wrap: nowrap;
+    }
+    .btn-back {
+      border: none;
+      outline: none;
+      background-color: $primary-color-dark;
+      color: $custom-white;
+      border-radius: 50%;
+      aspect-ratio: 1;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .connected-users {
+    background-color: $custom-black;
+    color: $primary-color-dark;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    width: 100vw;
+    max-width: 640px;
+    position: relative;
+    left: -2rem;
+
+    .title-users {
+      font-weight: bold;
+      color: $custom-white;
+      text-wrap: nowrap;
+    }
+
+    .list-users {
+      gap: 0.5rem;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      li {
+        color: $custom-white;
+        text-wrap: nowrap;
+        &::after {
+          content: ",";
+          margin-right: 0.25rem;
+        }
+
+        &:nth-last-child(2)::after {
+          content: " y ";
+          margin-left: 0.25rem;
+        }
+
+        &:last-child {
+          //margin-left: -0.5rem;
+
+          &::after {
+            content: "";
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .chat-container {
+    .connected-users {
+      left: -1rem;
+      border-radius: 0;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .chat-container {
+    border: none;
+    border-radius: 0;
+  }
+}

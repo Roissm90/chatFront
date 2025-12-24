@@ -1,0 +1,191 @@
+@use "../../variables" as *;
+
+.username-container {
+  width: 100%;
+  max-width: 100%;
+
+  .logo-container {
+    width: 100%;
+    max-width: 250px;
+
+    .picture-logo {
+      width: 100%;
+      max-width: 100%;
+      object-fit: cover;
+      object-position: center;
+      position: relative;
+      left: -40px;
+    }
+  }
+
+  .title-form {
+    text-align: left;
+    color: $primary-color;
+    border-bottom: $primary-color 2px solid;
+    padding-bottom: 0.25rem;
+  }
+
+  .username-form {
+    width: 100%;
+    max-width: 100%;
+    gap: 2rem;
+    align-items: stretch;
+
+    @media (max-width: 640px) {
+      gap: 1rem;
+      flex-direction: column;
+    }
+
+    .label-username {
+      background-color: $secondary-color-op50;
+      flex: 1;
+      color: $primary-color-dark;
+
+      &.vibrate {
+        animation: vibrate 1s linear;
+      }
+
+      .label-text {
+        font-weight: bold;
+      }
+
+      .input-username {
+        border: none;
+        outline: none;
+        padding-bottom: 0;
+        max-width: 100px;
+        background-color: transparent !important;
+        color: $primary-color-dark !important;
+        font-weight: bold;
+      }
+    }
+
+    .submit {
+      flex: 1;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      background-color: $primary-color;
+      color: $custom-white;
+      font-weight: bold;
+    }
+  }
+
+  .title-invite {
+    text-align: left;
+    color: $primary-color;
+    border-bottom: $primary-color 2px solid;
+    padding-bottom: 0.25rem;
+  }
+
+  .invite-button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+    background-color: $secondary-color;
+    color: $custom-white;
+    width: 100%;
+    font-weight: bold;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: rgba(0, 0, 0, 0.5);
+    .modal-content {
+      width: 95%;
+      max-width: 640px;
+      margin: 0 auto;
+      background-color: $custom-white;
+      position: relative;
+
+      .title-modal {
+        color: $primary-color-dark;
+        font-weight: bold;
+      }
+
+      .input-telf {
+        display: block;
+        color: $primary-color-dark;
+        border: 1px solid $primary-color !important;
+        &.vibrate {
+          animation: vibrate 1s linear;
+        }
+      }
+
+      .close-btn {
+        position: absolute;
+        top: -2rem;
+        right: 1rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        &::before,
+        &::after {
+          content: "";
+          position: absolute;
+          top: 0.75rem;
+          left: 0;
+          width: 1.5rem;
+          height: 0.15rem;
+          background-color: $custom-white;
+        }
+        &::before {
+          transform: rotate(45deg);
+        }
+        &::after {
+          transform: rotate(-45deg);
+        }
+
+        &:hover {
+          &::before,
+          &::after {
+            background-color: $custom-black;
+            transition: background-color 0.3s;
+          }
+        }
+      }
+
+      .invite-btn {
+        border: none;
+        outline: none;
+        background-color: $primary-color;
+        color: $custom-white;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        cursor: pointer;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+@keyframes vibrate {
+  0%   { transform: translateX(0); }
+  5%   { transform: translateX(-2px); }
+  10%  { transform: translateX(2px); }
+  15%  { transform: translateX(-2px); }
+  20%  { transform: translateX(2px); }
+  25%  { transform: translateX(-2px); }
+  30%  { transform: translateX(2px); }
+  35%  { transform: translateX(-2px); }
+  40%  { transform: translateX(2px); }
+  45%  { transform: translateX(-2px); }
+  50%  { transform: translateX(2px); }
+  55%  { transform: translateX(-2px); }
+  60%  { transform: translateX(2px); }
+  65%  { transform: translateX(-2px); }
+  70%  { transform: translateX(2px); }
+  75%  { transform: translateX(-2px); }
+  80%  { transform: translateX(2px); }
+  85%  { transform: translateX(-2px); }
+  90%  { transform: translateX(2px); }
+  95%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
