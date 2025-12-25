@@ -30,10 +30,29 @@ export default function ChatList({
   };
   */
 
-  const compartirEnWhatsapp = () => {
+  const compartirEnlace = async () => {
     const enlace = `${window.location.origin}?invite=${miId}`;
-    const urlWhatsapp = `https://wa.me/?text=${encodeURIComponent(enlace)}`;
-    window.open(urlWhatsapp, "_blank"); // abre WhatsApp Web o App
+    
+    const shareData = {
+      title: "Mi Chat",
+      text: "¡Hablemos por este chat!",
+      url: enlace,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("El usuario canceló o hubo un error:", err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(enlace);
+        alert("Menú de compartir no disponible. Enlace copiado al portapapeles ✅");
+      } catch (err) {
+        console.error("Error al copiar el enlace: ", err);
+      }
+    }
   };
 
   const handleMouseEnter = () => {
@@ -54,7 +73,7 @@ export default function ChatList({
         <h2 className="fs-3">Mis Conversaciones</h2>
 
         <button
-          onClick={compartirEnWhatsapp}
+          onClick={compartirEnlace}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           className={`btn-invite pd-1 br-1 shadow`}
