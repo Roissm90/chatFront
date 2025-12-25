@@ -7,6 +7,8 @@ export default function Chat({ socket, username, selectedUser, onBack, onContact
 
   useEffect(() => {
     if (!selectedUser) return;
+
+    // Pedir historial al servidor
     socket.emit("get-chat", { withUserId: selectedUser._id });
 
     const hHistorial = (msgs) => {
@@ -15,11 +17,17 @@ export default function Chat({ socket, username, selectedUser, onBack, onContact
     };
 
     const hMensaje = (msg) => {
+      // Mantenemos tu efecto de 50ms
       setTimeout(() => {
         setMensajes((prev) => {
-          if (prev.find(m => m._id === msg._id)) return prev;
+          // IMPORTANTE: Comprobamos si el mensaje ya está para no duplicar
+          const existe = prev.some(m => m._id === msg._id || (m.timestamp === msg.timestamp && m.text === msg.text));
+          if (existe) return prev;
+          
           return [...prev, msg];
         });
+        
+        // Notificamos que hay un nuevo contacto/mensaje
         onContactFound(selectedUser._id);
       }, 50);
     };
@@ -31,7 +39,8 @@ export default function Chat({ socket, username, selectedUser, onBack, onContact
       socket.off("historial", hHistorial);
       socket.off("mensaje", hMensaje);
     };
-  }, [selectedUser, socket]);
+    // Añadimos las dependencias necesarias para que el listener se actualice si cambian
+  }, [selectedUser, socket, onContactFound]); 
 
   const enviarMensaje = (texto) => {
     if (!texto.trim()) return;
