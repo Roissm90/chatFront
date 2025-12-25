@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import UsernameForm from "./components/UsernameForm/UsernameForm";
+import UsernameForm from "./components/usernameForm/UsernameForm";
 import ChatList from "./components/chatList/ChatList";
 import Chat from "./components/chat/Chat";
 
