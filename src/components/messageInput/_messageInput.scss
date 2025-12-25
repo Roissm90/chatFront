@@ -9,13 +9,13 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100vw;
-  max-width: 636px;
+  max-width: 767px;
   margin: 0 auto;
   padding: 4rem 2rem 2rem;
   background: linear-gradient(0deg,rgba(25, 109, 245, 1) 0%, rgba(59, 130, 246, 1) 30%, rgba(147, 197, 253, 1) 60%, rgba(147, 197, 253, 0.5) 80%, rgba(147, 197, 253, 0) 100%);
   border-radius: 0 0 0.75rem 0.75rem;
 
-  @media (max-width: 640px) {
+  @media (max-width: 767px) {
     padding: 2rem 1rem 1rem;
     border-radius: 0;
   }
