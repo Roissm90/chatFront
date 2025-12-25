@@ -1,11 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import Logo from "../../../public/images/logo_chat.png";
+import Hide from "../../../public/images/hide.png";
+import NoHide from "../../../public/images/no_hide.png";
+import Info from "../../../public/images/info.png";
 
 export default function UsernameForm({ onSubmit, socket }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorServer, setErrorServer] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPasswordVisible, setPasswordVisible] = useState(false);
+  const [isInfoVisible, setInfoVisible] = useState(false);
   const [telefono, setTelefono] = useState("");
   const [vibrateChat, setVibrateChat] = useState(false);
   const [vibrateInvite, setVibrateInvite] = useState(false);
@@ -16,6 +22,28 @@ export default function UsernameForm({ onSubmit, socket }) {
 
   const modalRef = useRef(null);
   const inputTelefonoRef = useRef(null);
+  const timerPasswordRef = useRef(null);
+  const timerInfoRef = useRef(null);
+
+  const togglePasswordVisibility = () => {
+    if (timerPasswordRef.current) clearTimeout(timerPasswordRef.current);
+
+    setPasswordVisible(true);
+
+    timerPasswordRef.current = setTimeout(() => {
+      setPasswordVisible(false);
+    }, 3000);
+  };
+
+  const showInfo = () => {
+    if (timerInfoRef.current) clearTimeout(timerInfoRef.current);
+
+    setInfoVisible(true);
+
+    timerInfoRef.current = setTimeout(() => {
+      setInfoVisible(false);
+    }, 30000);
+  };
 
   // Escuchar errores de validación del servidor
   useEffect(() => {
@@ -42,13 +70,13 @@ export default function UsernameForm({ onSubmit, socket }) {
       return;
     }
 
-    if (!trimmedName || !trimmedEmail) {
+    if (!trimmedName || !trimmedEmail || !password) {
       setVibrateChat(true);
       setTimeout(() => setVibrateChat(false), 1000);
       return;
     }
 
-    onSubmit(trimmedName, trimmedEmail);
+    onSubmit(trimmedName, trimmedEmail, password);
   };
 
   const handleInviteOpen = () => {
@@ -108,9 +136,7 @@ export default function UsernameForm({ onSubmit, socket }) {
         onSubmit={handleSubmit}
         className="username-form flex-column pd-2 mb-3"
       >
-        <div
-          className="wrapper-form flex-row align-start justify-between"
-        >
+        <div className="wrapper-form flex-row align-start justify-between">
           <div className="wrapper-labels flex-column">
             <label
               className={`label-username br-1 pd-2 flex-row align-end justify-start ${
@@ -121,7 +147,8 @@ export default function UsernameForm({ onSubmit, socket }) {
               <span className="label-text fs-2">Alias:</span>
               <input
                 type="text"
-                placeholder="Santi"
+                placeholder="User90"
+                maxLength={10}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input-username fs-2 ml-half"
@@ -143,6 +170,42 @@ export default function UsernameForm({ onSubmit, socket }) {
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-username fs-2 ml-half"
                 id="email"
+              />
+            </label>
+
+            <label
+              className={`label-username br-1 pd-2 flex-row align-end justify-start ${
+                vibrateChat ? "vibrate" : ""
+              }`}
+              htmlFor="password"
+            >
+              <div class="wrapper-info flex-row align-center justify-center">
+                <img
+                  onClick={showInfo}
+                  src={Info}
+                  className="info-picture"
+                  alt="info picture"
+                />
+                {isInfoVisible && 
+                  <p class="info-text fs-1 pd-2 br-half">La contraseña debe tener al menos <strong>6 caracteres, al menos 1 letra mayúscula, al menos 1 número y al menos 1 carácter especial: @$!%*?&</strong></p>
+                }
+              </div>
+              
+              <span className="label-text fs-2">Contraseña:</span>
+              <input
+                type={isPasswordVisible ? "text" : "password"}
+                placeholder="******"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-username fs-2 ml-half"
+                id="password"
+              />
+              <img
+                onClick={togglePasswordVisibility}
+                src={isPasswordVisible ? NoHide : Hide}
+                className="hide-picture"
+                alt={isPasswordVisible ? "visible image" : "invisible image"}
               />
             </label>
           </div>

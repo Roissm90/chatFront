@@ -11,22 +11,29 @@ export default function App() {
   const [email, setEmail] = useState(sessionStorage.getItem("userEmail") || "");
   const [usuariosGlobales, setUsuariosGlobales] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [myId, setMyId] = useState(""); // Esta es la clave
+  const [myId, setMyId] = useState(""); 
   const [misContactosIds, setMisContactosIds] = useState([]);
 
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
     socket.on("init-session", (data) => {
+      // SOLO CUANDO EL SERVIDOR RESPONDE OK:
+      // Seteamos los estados y guardamos en sessionStorage
       setMyId(data.userId);
+      
+      // Si venimos del formulario (no de una recarga), guardamos los datos
+      if (data.tempName && data.tempEmail) {
+        setUsername(data.tempName);
+        setEmail(data.tempEmail);
+        sessionStorage.setItem("username", data.tempName);
+        sessionStorage.setItem("userEmail", data.tempEmail);
+      }
     });
 
     socket.on("user-error", (mensaje) => {
       console.log("⚠️ ERROR DEL SERVIDOR:", mensaje);
-      sessionStorage.clear();
-      setUsername("");
-      setEmail("");
-      setMyId(""); 
-      //alert(mensaje);
+      // No hacemos NADA. El formulario ya escucha este error para mostrar el banner.
+      // Al no hacer nada aquí, username y email en App siguen vacíos y no se guarda nada.
     });
 
     socket.on("lista-usuarios-global", (users) => {
@@ -40,7 +47,7 @@ export default function App() {
     };
   }, []);
 
-  // 2. COMANDO COMAND + E
+  // 2. COMANDO COMAND + E (Cerrar sesión)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "e") {
@@ -55,12 +62,13 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 3. LOGICA DE CONEXIÓN
+  // 3. LOGICA DE RECONEXIÓN AUTOMÁTICA
   useEffect(() => {
-    if (username && email) {
-      socket.emit("join", { username, email });
+    // Si ya existen datos en el navegador (login previo), conectamos
+    if (username && email && !myId) {
+      socket.emit("join", { username, email, password: "" });
     }
-  }, [username, email]);
+  }, [username, email, myId]);
 
   // 4. HISTORIAL Y CONTACTOS
   useEffect(() => {
@@ -78,7 +86,7 @@ export default function App() {
     return () => socket.off("historial", handleHistorialGlobal);
   }, [usuariosGlobales, username]);
 
-  // 5. INVITACIÓN
+  // 5. INVITACIÓN POR URL
   useEffect(() => {
     const inviteId = new URLSearchParams(window.location.search).get("invite");
     if (inviteId && usuariosGlobales.length > 0 && !selectedUser) {
@@ -91,14 +99,12 @@ export default function App() {
     }
   }, [usuariosGlobales, selectedUser]);
 
-  if (!username || !email || !myId) {
+  // --- VISTAS ---
+  if (!myId) {
     return (
       <UsernameForm
-        onSubmit={(n, e) => {
-          setUsername(n);
-          setEmail(e);
-          sessionStorage.setItem("username", n);
-          sessionStorage.setItem("userEmail", e);
+        onSubmit={(n, e, p) => {
+          socket.emit("join", { username: n, email: e, password: p });
         }}
         socket={socket}
       />
