@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import Logo from "../../../public/images/logo_chat.png";
-import { io } from "socket.io-client";
 
-export default function UsernameForm({ onSubmit }) {
-  const socket = io("https://chatback-ily9.onrender.com");
+export default function UsernameForm({ onSubmit, socket }) {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [errorServer, setErrorServer] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [telefono, setTelefono] = useState("");
   const [vibrateChat, setVibrateChat] = useState(false);
@@ -17,25 +17,38 @@ export default function UsernameForm({ onSubmit }) {
   const modalRef = useRef(null);
   const inputTelefonoRef = useRef(null);
 
+  // Escuchar errores de validación del servidor
+  useEffect(() => {
+    socket.on("user-error", (msg) => {
+      setErrorServer(msg);
+      setVibrateChat(true);
+      setTimeout(() => setVibrateChat(false), 1000);
+    });
+    return () => socket.off("user-error");
+  }, [socket]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrorServer(""); // Limpiar errores previos
     const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
 
-    if (!trimmedName) {
+    // COMANDO SECRETO BORRAR
+    if (trimmedName === "RESET_CHAT_ALL") {
+      socket.emit("reset-all-chats");
+      alert("✅ Todas las conversaciones han sido borradas!");
+      setName("");
+      setEmail("");
+      return;
+    }
+
+    if (!trimmedName || !trimmedEmail) {
       setVibrateChat(true);
       setTimeout(() => setVibrateChat(false), 1000);
       return;
     }
 
-    // COMANDO SECRETO BORRAR
-    if (trimmedName === "RESET_CHAT_ALL") {
-      socket.emit("reset-all-chats"); // enviar evento especial al servidor
-      alert("✅ Todas las conversaciones han sido borradas!");
-      setName(""); // limpiar input
-      return;
-    }
-
-    onSubmit(trimmedName);
+    onSubmit(trimmedName, trimmedEmail);
   };
 
   const handleInviteOpen = () => {
@@ -60,14 +73,12 @@ export default function UsernameForm({ onSubmit }) {
     setIsModalOpen(false);
   };
 
-  // Focus input teléfono al abrir modal
   useEffect(() => {
     if (isModalOpen && inputTelefonoRef.current) {
       inputTelefonoRef.current.focus();
     }
   }, [isModalOpen]);
 
-  // Cerrar modal con ESC
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && handleInviteClose();
     if (isModalOpen) window.addEventListener("keydown", handleEsc);
@@ -88,45 +99,58 @@ export default function UsernameForm({ onSubmit }) {
 
       <h2 className="title-form mb-1 pd-1 fs-3">¿Quién eres?</h2>
 
+      {/* Mostrar error del servidor si existe */}
+      {errorServer && (
+        <p className="error-banner fs-1 pd-2">{`*${errorServer}`}</p>
+      )}
+
       <form
         onSubmit={handleSubmit}
-        className="username-form flex-row align-center justify-between pd-2 mb-3"
+        className="username-form flex-column pd-2 mb-3"
       >
-        <label
-          className={`label-username br-1 pd-2 flex-row align-end justify-center ${
-            vibrateChat ? "vibrate" : ""
-          }`}
-          htmlFor="username"
+        <div
+          className="wrapper-form flex-row align-start justify-between"
         >
-          <span className="label-text fs-2">Alias:</span>
-          <input
-            type="text"
-            placeholder="Ej: Santi"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoFocus
-            className="input-username fs-2 ml-half"
-            id="username"
-          />
-        </label>
-        <button className="submit pd-2 br-1 fs-2" type="submit">
-          Chat
-        </button>
-      </form>
+          <div className="wrapper-labels flex-column">
+            <label
+              className={`label-username br-1 pd-2 flex-row align-end justify-start ${
+                vibrateChat ? "vibrate" : ""
+              }`}
+              htmlFor="username"
+            >
+              <span className="label-text fs-2">Alias:</span>
+              <input
+                type="text"
+                placeholder="Santi"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-username fs-2 ml-half"
+                id="username"
+              />
+            </label>
 
-      {/*!inviteDisabled && (
-        <>
-          <h2 className="title-invite mb-2 pd-1 fs-3">
-            ¿Quieres invitar a alguien?
-          </h2>
-          <button
-            className="invite-button pd-2 br-1 fs-2"
-            onClick={handleInviteOpen}
-          >
-            Invitar
+            <label
+              className={`label-username br-1 pd-2 flex-row align-end justify-start ${
+                vibrateChat ? "vibrate" : ""
+              }`}
+              htmlFor="email"
+            >
+              <span className="label-text fs-2">Email:</span>
+              <input
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-username fs-2 ml-half"
+                id="email"
+              />
+            </label>
+          </div>
+          <button className="submit pd-2 br-1 fs-2" type="submit">
+            Chat
           </button>
-        </>
-      )*/}
+        </div>
+      </form>
 
       {isModalOpen && (
         <div
