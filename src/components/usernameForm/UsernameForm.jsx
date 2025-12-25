@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import Logo from "../../../public/images/logo_chat.png";
+import { io } from "socket.io-client";
 
 export default function UsernameForm({ onSubmit }) {
+  const socket = io("https://chatback-ily9.onrender.com");
   const [name, setName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [telefono, setTelefono] = useState("");
@@ -17,12 +19,23 @@ export default function UsernameForm({ onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
       setVibrateChat(true);
       setTimeout(() => setVibrateChat(false), 1000);
       return;
     }
-    onSubmit(name.trim());
+
+    // COMANDO SECRETO BORRAR
+    if (trimmedName === "RESET_CHAT_ALL") {
+      socket.emit("reset-all-chats"); // enviar evento especial al servidor
+      alert("✅ Todas las conversaciones han sido borradas!");
+      setName(""); // limpiar input
+      return;
+    }
+
+    onSubmit(trimmedName);
   };
 
   const handleInviteOpen = () => {
@@ -114,7 +127,7 @@ export default function UsernameForm({ onSubmit }) {
           </button>
         </>
       )*/}
-      
+
       {isModalOpen && (
         <div
           className="modal-overlay flex-row align-center justify-center"
