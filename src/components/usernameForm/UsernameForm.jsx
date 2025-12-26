@@ -37,12 +37,15 @@ export default function UsernameForm({ onSubmit, socket }) {
 
   const showInfo = () => {
     if (timerInfoRef.current) clearTimeout(timerInfoRef.current);
-
+    if (isInfoVisible) {
+      setInfoVisible(false);
+      return;
+    }
     setInfoVisible(true);
 
     timerInfoRef.current = setTimeout(() => {
       setInfoVisible(false);
-    }, 30000);
+    }, 3000);
   };
 
   // Escuchar errores de validación del servidor
@@ -186,11 +189,17 @@ export default function UsernameForm({ onSubmit, socket }) {
                   className="info-picture"
                   alt="info picture"
                 />
-                {isInfoVisible && 
-                  <p class="info-text fs-1 pd-2 br-half">La contraseña debe tener al menos <strong>6 caracteres, al menos 1 letra mayúscula, al menos 1 número y al menos 1 carácter especial: @$!%*?&</strong></p>
-                }
+                {isInfoVisible && (
+                  <p class="info-text fs-1 pd-2 br-half">
+                    La contraseña debe tener al menos{" "}
+                    <strong>
+                      6 caracteres, al menos 1 letra mayúscula, al menos 1
+                      número y al menos 1 carácter especial: @$!%*?&
+                    </strong>
+                  </p>
+                )}
               </div>
-              
+
               <span className="label-text fs-2">Contraseña:</span>
               <input
                 type={isPasswordVisible ? "text" : "password"}
