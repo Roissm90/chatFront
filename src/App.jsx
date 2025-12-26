@@ -11,11 +11,11 @@ export default function App() {
     sessionStorage.getItem("username") || ""
   );
   const [email, setEmail] = useState(sessionStorage.getItem("userEmail") || "");
-  
+
   // Recuperamos la clave ofuscada si existe
   const [password, setPassword] = useState(() => {
     const saved = sessionStorage.getItem("userP");
-    return saved ? atob(saved) : ""; 
+    return saved ? atob(saved) : "";
   });
 
   const [usuariosGlobales, setUsuariosGlobales] = useState([]);
@@ -136,6 +136,18 @@ export default function App() {
     setSelectedUser(user);
   };
 
+  const handleLogout = () => {
+    sessionStorage.clear();
+    setUsername("");
+    setEmail("");
+    setPassword("");
+    setMyId("");
+    setSelectedUser(null);
+    // Opcional: desconectar socket manualmente si fuera necesario
+    // socket.disconnect();
+    // socket.connect();
+  };
+
   // --- VISTAS ---
   if (!myId) {
     return (
@@ -143,7 +155,7 @@ export default function App() {
         onSubmit={(n, e, p) => {
           // Guardamos la clave ofuscada en session
           setPassword(p);
-          sessionStorage.setItem("userP", btoa(p)); 
+          sessionStorage.setItem("userP", btoa(p));
           socket.emit("join", { username: n, email: e, password: p });
         }}
         socket={socket}
@@ -174,6 +186,7 @@ export default function App() {
       alSeleccionar={seleccionarChat}
       novedades={novedades}
       socket={socket}
+      onLogout={handleLogout}
     />
   );
 }

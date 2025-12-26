@@ -1,12 +1,11 @@
 @use "../../variables" as *;
 
 .chat-list-container {
-  background-color: $secondary-color-op50;
+  background-color: $terciary-color;
   position: relative;
 
   .title-chats {
     color: $custom-black;
-    border-bottom: $custom-black 2px solid;
   }
 
   .copy-msg {
@@ -69,6 +68,48 @@
             transition: all ease 0.5s;
         }
       }
+    }
+  }
+
+  .btn-logout {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: $terciary-color;
+
+    .text {
+        color: $custom-black;
+        position: absolute;
+        z-index: 1;
+        left: 0;
+        bottom: 0; 
+        text-wrap: nowrap;
+
+        @media (max-width: 767px) {
+            display: none;
+        }
+    }
+
+    .picture {
+        width: 1.5rem;
+        max-width: 1.5rem;
+        height: 1.5rem;
+        max-height: 1.5rem;
+        object-fit: cover;
+        object-position: center;
+        position: relative;
+        z-index: 2;
+        background: $terciary-color;
+    }
+
+    &:hover {
+        width: 6.5rem;
+        transition: width ease 0.5s;
     }
   }
 

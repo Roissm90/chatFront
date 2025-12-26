@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import Logout from "../../../public/images/logout.png";
 
 export default function ChatList({
   usuarios,
@@ -8,6 +9,7 @@ export default function ChatList({
   misContactosIds,
   socket,
   novedades = [],
+  onLogout,
 }) {
   const [isWithoutText, setIsWithoutText] = useState(false);
   const [msgIfCopyOrNotCopy, setmsgIfCopyOrNotCopy] = useState("");
@@ -104,12 +106,23 @@ export default function ChatList({
         <h2 className="fs-3 title-chats">Mis Conversaciones</h2>
         {msgIfCopyOrNotCopy && (
           <p
-            className={`copy-msg fs-1 br-1 pd-2 ${isCopyVisible ? "visible" : ""}`}
+            className={`copy-msg fs-1 br-1 pd-2 ${
+              isCopyVisible ? "visible" : ""
+            }`}
             ref={textCopyorNotCopy}
           >
             {msgIfCopyOrNotCopy}
           </p>
         )}
+
+        <button
+          onClick={onLogout}
+          className="btn-logout fs-1 flex-row align-center justify-end"
+          title="Cerrar Sesión"
+        >
+          <span className="text fs-half">Cerrar sesión</span>
+          <img src={Logout} alt="logout" className="picture"/>
+        </button>
 
         <button
           onClick={compartirEnlace}
@@ -137,7 +150,7 @@ export default function ChatList({
                 className="user-item pd-2 mb-half br-1 fs-2 flex-row justify-between align-center"
               >
                 <strong>{u.username}</strong>
-                <span className="go fs-1">{'>'}</span>
+                <span className="go fs-1">{">"}</span>
 
                 {tieneNovedad && (
                   <span className="badge-new fs-1 pd-1 br-1">
