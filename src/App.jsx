@@ -7,21 +7,28 @@ import Chat from "./components/chat/Chat";
 const socket = io("https://chatback-ily9.onrender.com");
 
 export default function App() {
-  const [username, setUsername] = useState(sessionStorage.getItem("username") || "");
+  const [username, setUsername] = useState(
+    sessionStorage.getItem("username") || ""
+  );
   const [email, setEmail] = useState(sessionStorage.getItem("userEmail") || "");
+  
+  // Recuperamos la clave ofuscada si existe
+  const [password, setPassword] = useState(() => {
+    const saved = sessionStorage.getItem("userP");
+    return saved ? atob(saved) : ""; 
+  });
+
   const [usuariosGlobales, setUsuariosGlobales] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [myId, setMyId] = useState(""); 
+  const [myId, setMyId] = useState("");
   const [misContactosIds, setMisContactosIds] = useState([]);
+  const [novedades, setNovedades] = useState([]);
 
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
     socket.on("init-session", (data) => {
-      // SOLO CUANDO EL SERVIDOR RESPONDE OK:
-      // Seteamos los estados y guardamos en sessionStorage
       setMyId(data.userId);
-      
-      // Si venimos del formulario (no de una recarga), guardamos los datos
+
       if (data.tempName && data.tempEmail) {
         setUsername(data.tempName);
         setEmail(data.tempEmail);
@@ -32,8 +39,12 @@ export default function App() {
 
     socket.on("user-error", (mensaje) => {
       console.log("⚠️ ERROR DEL SERVIDOR:", mensaje);
-      // No hacemos NADA. El formulario ya escucha este error para mostrar el banner.
-      // Al no hacer nada aquí, username y email en App siguen vacíos y no se guarda nada.
+      // Si los datos guardados fallan, limpiamos para evitar bucles
+      if (mensaje === "Contraseña incorrecta.") {
+        sessionStorage.clear();
+        setMyId("");
+        setPassword("");
+      }
     });
 
     socket.on("lista-usuarios-global", (users) => {
@@ -55,6 +66,7 @@ export default function App() {
         sessionStorage.clear();
         setUsername("");
         setEmail("");
+        setPassword("");
         setMyId("");
       }
     };
@@ -62,21 +74,23 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 3. LOGICA DE RECONEXIÓN AUTOMÁTICA
+  // 3. LOGICA DE RECONEXIÓN AUTOMÁTICA (Usando la clave recuperada)
   useEffect(() => {
-    // Si ya existen datos en el navegador (login previo), conectamos
-    if (username && email && !myId) {
-      socket.emit("join", { username, email, password: "" });
+    if (username && email && password && !myId) {
+      socket.emit("join", { username, email, password });
     }
-  }, [username, email, myId]);
+  }, [username, email, password, myId]);
 
   // 4. HISTORIAL Y CONTACTOS
   useEffect(() => {
     const handleHistorialGlobal = (mensajes) => {
-      if (!mensajes || mensajes.length === 0 || usuariosGlobales.length === 0) return;
+      if (!mensajes || mensajes.length === 0 || usuariosGlobales.length === 0)
+        return;
       const otroMensaje = mensajes.find((m) => m.user !== username);
       if (otroMensaje) {
-        const contacto = usuariosGlobales.find((u) => u.username === otroMensaje.user);
+        const contacto = usuariosGlobales.find(
+          (u) => u.username === otroMensaje.user
+        );
         if (contacto) {
           setMisContactosIds((prev) => [...new Set([...prev, contacto._id])]);
         }
@@ -99,11 +113,37 @@ export default function App() {
     }
   }, [usuariosGlobales, selectedUser]);
 
+  // 6. MENSAJES NUEVOS
+  useEffect(() => {
+    const handleMensajeNovedad = (msg) => {
+      if (
+        msg.user !== username &&
+        (!selectedUser || selectedUser.username !== msg.user)
+      ) {
+        const emisor = usuariosGlobales.find((u) => u.username === msg.user);
+        if (emisor) {
+          setNovedades((prev) => [...new Set([...prev, emisor._id])]);
+        }
+      }
+    };
+
+    socket.on("mensaje", handleMensajeNovedad);
+    return () => socket.off("mensaje", handleMensajeNovedad);
+  }, [username, selectedUser, usuariosGlobales]);
+
+  const seleccionarChat = (user) => {
+    setNovedades((prev) => prev.filter((id) => id !== user._id));
+    setSelectedUser(user);
+  };
+
   // --- VISTAS ---
   if (!myId) {
     return (
       <UsernameForm
         onSubmit={(n, e, p) => {
+          // Guardamos la clave ofuscada en session
+          setPassword(p);
+          sessionStorage.setItem("userP", btoa(p)); 
           socket.emit("join", { username: n, email: e, password: p });
         }}
         socket={socket}
@@ -118,7 +158,9 @@ export default function App() {
         username={username}
         selectedUser={selectedUser}
         onBack={() => setSelectedUser(null)}
-        onContactFound={(id) => setMisContactosIds((prev) => [...new Set([...prev, id])])}
+        onContactFound={(id) =>
+          setMisContactosIds((prev) => [...new Set([...prev, id])])
+        }
       />
     );
   }
@@ -129,7 +171,8 @@ export default function App() {
       miNombre={username}
       miId={myId}
       misContactosIds={misContactosIds}
-      alSeleccionar={setSelectedUser}
+      alSeleccionar={seleccionarChat}
+      novedades={novedades}
       socket={socket}
     />
   );

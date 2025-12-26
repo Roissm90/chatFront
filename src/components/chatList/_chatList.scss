@@ -8,6 +8,23 @@
     color: $custom-black;
     border-bottom: $custom-black 2px solid;
   }
+
+  .copy-msg {
+    color: $custom-white;
+    background-color: $custom-black;
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    font-weight: bold;
+    z-index: -1;
+    opacity: 0;
+
+    &.visible {
+      opacity: 1;
+      transition: opacity ease 0.5s;
+    }
+  }
+
   .list-users {
     gap: 0.5rem;
     li {
@@ -20,21 +37,41 @@
       align-items: center;
       cursor: pointer;
       gap: 1rem;
+      position: relative;
 
       .go {
         opacity: 0;
         transform: translateX(-10px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .badge-new {
+        position: absolute;
+        top: 50%;
+        right: 0.5rem;
+        transform: translateY(-50%);
+        background-color: $primary-color-dark;
+        color: $custom-white;
       }
 
       &:hover {
+        transition: all ease 0.5s;
+        background-color: $primary-color-dark;
+        color: $custom-white;
         .go {
           opacity: 1;
           transform: translateX(0);
+          color: $custom-white;
+        }
+        .badge-new {
+            background-color: $custom-white;
+            color: $primary-color-dark;
+            transition: all ease 0.5s;
         }
       }
     }
   }
+
   .btn-invite {
     position: absolute;
     bottom: 1rem;
@@ -84,12 +121,12 @@
     }
 
     .add-text {
-        margin-right: 1rem;
-        transition: margin ease 0.5s;
+      margin-right: 1rem;
+      transition: margin ease 0.5s;
 
-        &.hide {
-            margin-right: -2.7rem;
-        }
+      &.hide {
+        margin-right: -2.7rem;
+      }
     }
   }
 }
