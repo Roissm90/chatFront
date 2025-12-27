@@ -12,7 +12,6 @@ export default function App() {
   );
   const [email, setEmail] = useState(sessionStorage.getItem("userEmail") || "");
 
-  // Recuperamos la clave ofuscada si existe
   const [password, setPassword] = useState(() => {
     const saved = sessionStorage.getItem("userP");
     return saved ? atob(saved) : "";
@@ -23,6 +22,8 @@ export default function App() {
   const [myId, setMyId] = useState("");
   const [misContactosIds, setMisContactosIds] = useState([]);
   const [novedades, setNovedades] = useState([]);
+
+  const [ultimasLecturas, setUltimasLecturas] = useState({});
 
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
@@ -86,19 +87,41 @@ export default function App() {
     const handleHistorialGlobal = (mensajes) => {
       if (!mensajes || mensajes.length === 0 || usuariosGlobales.length === 0)
         return;
-      const otroMensaje = mensajes.find((m) => m.user !== username);
-      if (otroMensaje) {
-        const contacto = usuariosGlobales.find(
-          (u) => u.username === otroMensaje.user
-        );
-        if (contacto) {
-          setMisContactosIds((prev) => [...new Set([...prev, contacto._id])]);
+
+      const mensajeAjeno = mensajes.find((m) => m.user !== username);
+      // Usamos una comparación segura de strings
+      const contacto = usuariosGlobales.find(
+        (u) =>
+          u.username ===
+          (mensajeAjeno
+            ? mensajeAjeno.user
+            : mensajes[0].user === username
+            ? ""
+            : mensajes[0].user)
+      );
+
+      if (contacto) {
+        setMisContactosIds((prev) => [...new Set([...prev, contacto._id])]);
+
+        const ultimoMsg = mensajes[mensajes.length - 1];
+        if (ultimoMsg.user !== username) {
+          const fechaMsg = new Date(ultimoMsg.timestamp).getTime();
+          const fechaLectura = ultimasLecturas[contacto._id] || 0;
+
+          if (
+            fechaMsg > fechaLectura &&
+            (!selectedUser || selectedUser._id !== contacto._id)
+          ) {
+            setNovedades((prev) => [...new Set([...prev, contacto._id])]);
+          }
         }
       }
     };
+
     socket.on("historial", handleHistorialGlobal);
     return () => socket.off("historial", handleHistorialGlobal);
-  }, [usuariosGlobales, username]);
+    // IMPORTANTE: selectedUser debe ir completo, pero nunca condicionalmente
+  }, [usuariosGlobales, username, selectedUser, ultimasLecturas]);
 
   // 5. INVITACIÓN POR URL
   useEffect(() => {
@@ -122,6 +145,7 @@ export default function App() {
       ) {
         const emisor = usuariosGlobales.find((u) => u.username === msg.user);
         if (emisor) {
+          setMisContactosIds((prev) => [...new Set([...prev, emisor._id])]);
           setNovedades((prev) => [...new Set([...prev, emisor._id])]);
         }
       }
@@ -133,6 +157,10 @@ export default function App() {
 
   const seleccionarChat = (user) => {
     setNovedades((prev) => prev.filter((id) => id !== user._id));
+    setUltimasLecturas((prev) => ({
+      ...prev,
+      [user._id]: Date.now(),
+    }));
     setSelectedUser(user);
   };
 
@@ -143,9 +171,8 @@ export default function App() {
     setPassword("");
     setMyId("");
     setSelectedUser(null);
-    // Opcional: desconectar socket manualmente si fuera necesario
-    // socket.disconnect();
-    // socket.connect();
+    socket.disconnect();
+    socket.connect();
   };
 
   // --- VISTAS ---
@@ -169,7 +196,13 @@ export default function App() {
         socket={socket}
         username={username}
         selectedUser={selectedUser}
-        onBack={() => setSelectedUser(null)}
+        onBack={() => {
+          setUltimasLecturas((prev) => ({
+            ...prev,
+            [selectedUser._id]: Date.now(),
+          }));
+          setSelectedUser(null);
+        }}
         onContactFound={(id) =>
           setMisContactosIds((prev) => [...new Set([...prev, id])])
         }

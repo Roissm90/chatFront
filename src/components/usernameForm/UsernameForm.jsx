@@ -182,7 +182,7 @@ export default function UsernameForm({ onSubmit, socket }) {
               }`}
               htmlFor="password"
             >
-              <div class="wrapper-info flex-row align-center justify-center">
+              <div className="wrapper-info flex-row align-center justify-center">
                 <img
                   onClick={showInfo}
                   src={Info}

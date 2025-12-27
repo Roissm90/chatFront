@@ -6,6 +6,28 @@
 
   .title-chats {
     color: $custom-black;
+    margin-right: auto;
+    margin-left: 1rem;
+  }
+
+  .btn-upload-image {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: none;
+    outline: none;
+    background-color: $custom-white;
+    cursor: pointer;
+
+    .user-avatar {
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      max-height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
   }
 
   .copy-msg {
@@ -27,7 +49,7 @@
   .list-users {
     gap: 0.5rem;
     li {
-      width: 100%;
+      width: calc(100% - 3.5rem);
       color: $primary-color-dark;
       text-wrap: nowrap;
       border: $primary-color-dark 1px solid;
@@ -37,6 +59,7 @@
       cursor: pointer;
       gap: 1rem;
       position: relative;
+      margin-left: 3.5rem;
 
       .go {
         opacity: 0;
@@ -53,6 +76,16 @@
         color: $custom-white;
       }
 
+      .chat-avatar {
+        width: 2rem;
+        height: 2rem;
+        object-fit: cover;
+        object-position: center;
+        border-radius: 50%;
+        position: absolute;
+        right: calc(100% + 1rem);
+      }
+
       &:hover {
         transition: all ease 0.5s;
         background-color: $primary-color-dark;
@@ -63,9 +96,20 @@
           color: $custom-white;
         }
         .badge-new {
-            background-color: $custom-white;
-            color: $primary-color-dark;
-            transition: all ease 0.5s;
+          background-color: $custom-white;
+          color: $primary-color-dark;
+          transition: all ease 0.5s;
+        }
+      }
+
+      @media (max-width: 767px) {
+        width: calc(100% - 3rem);
+        margin-left: 3rem;
+
+        .chat-avatar {
+          width: 1.5rem;
+          height: 1.5rem;
+          right: calc(100% + 1rem);
         }
       }
     }
@@ -83,33 +127,33 @@
     background: $terciary-color;
 
     .text {
-        color: $custom-black;
-        position: absolute;
-        z-index: 1;
-        left: 0;
-        bottom: 0; 
-        text-wrap: nowrap;
+      color: $custom-black;
+      position: absolute;
+      z-index: 1;
+      left: 0;
+      bottom: 0;
+      text-wrap: nowrap;
 
-        @media (max-width: 767px) {
-            display: none;
-        }
+      @media (max-width: 767px) {
+        display: none;
+      }
     }
 
     .picture {
-        width: 1.5rem;
-        max-width: 1.5rem;
-        height: 1.5rem;
-        max-height: 1.5rem;
-        object-fit: cover;
-        object-position: center;
-        position: relative;
-        z-index: 2;
-        background: $terciary-color;
+      width: 1.5rem;
+      max-width: 1.5rem;
+      height: 1.5rem;
+      max-height: 1.5rem;
+      object-fit: cover;
+      object-position: center;
+      position: relative;
+      z-index: 2;
+      background: $terciary-color;
     }
 
     &:hover {
-        width: 6.5rem;
-        transition: width ease 0.5s;
+      width: 6.5rem;
+      transition: width ease 0.5s;
     }
   }
 
