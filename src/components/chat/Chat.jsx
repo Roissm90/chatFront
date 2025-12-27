@@ -12,9 +12,10 @@ export default function Chat({
 }) {
   const [mensajes, setMensajes] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [isUploading] = useState(false); 
+  const [isUploading] = useState(false);
   const fileInputRef = useRef(null);
   const [online, setOnline] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -81,20 +82,47 @@ export default function Chat({
     };
   }, [selectedUser, socket]);
 
+  useEffect(() => {
+    if (!socket || !selectedUser) return;
+
+    const hStart = ({ fromUserId }) => {
+      if (fromUserId === selectedUser._id) setIsTyping(true);
+    };
+    const hStop = ({ fromUserId }) => {
+      if (fromUserId === selectedUser._id) setIsTyping(false);
+    };
+
+    socket.on("usuario-escribiendo", hStart);
+    socket.on("usuario-estado-deja-escribiendo", hStop);
+
+    return () => {
+      socket.off("usuario-escribiendo", hStart);
+      socket.off("usuario-estado-deja-escribiendo", hStop);
+    };
+  }, [selectedUser, socket]);
+
   const enviarMensaje = (texto) => {
     if (!texto.trim()) return;
     socket.emit("mensaje", { text: texto, toUserId: selectedUser._id });
   };
 
+  const manejarEscribiendo = (estaEscribiendo) => {
+    if (estaEscribiendo) {
+      socket.emit("escribiendo", { toUserId: selectedUser._id });
+    } else {
+      socket.emit("deja-escribiendo", { toUserId: selectedUser._id });
+    }
+  };
+
   const imagenAvatar = selectedUser?.avatar || AvatarDefault;
 
   const showModal = () => {
-    if(!isModalOpen) setModalOpen(true);
-  }
+    if (!isModalOpen) setModalOpen(true);
+  };
 
   const hideModal = () => {
-    if(isModalOpen) setModalOpen(false);
-  }
+    if (isModalOpen) setModalOpen(false);
+  };
 
   const handleBackdropClick = (e) => {
     if (e.target.classList.contains("modal-avatar")) {
@@ -120,17 +148,14 @@ export default function Chat({
     <div className="chat-container">
       <div className="chat-header flex-row justify-between align-center pd-2">
         <div className="flex-row align-end justify-between">
-          <div className={`line ${online ? 'on' : 'off'}`}></div>
+          <div className={`line ${online ? "on" : "off"}`}></div>
           <h3 className="fs-3 title-chat">{selectedUser?.username}</h3>
 
-          <button 
-            className={`btn-see-image`}
-            onClick={showModal}
-          >
-            <img 
-              src={imagenAvatar} 
-              alt="contact-avatar" 
-              className="user-avatar" 
+          <button className={`btn-see-image`} onClick={showModal}>
+            <img
+              src={imagenAvatar}
+              alt="contact-avatar"
+              className="user-avatar"
             />
           </button>
         </div>
@@ -139,11 +164,31 @@ export default function Chat({
         </button>
       </div>
       <MessageList mensajes={mensajes} username={username} />
-      <MessageInput enviarMensaje={enviarMensaje} />
+      <MessageInput enviarMensaje={enviarMensaje} onTyping={manejarEscribiendo}/>
       {isModalOpen && (
-        <div className="modal-avatar flex-row justify-center align-center" onClick={handleBackdropClick}>
-          <img className="picture-avatar" src={imagenAvatar} alt={`imagen de ${selectedUser?.username}`}/>
+        <div
+          className="modal-avatar flex-row justify-center align-center"
+          onClick={handleBackdropClick}
+        >
+          <img
+            className="picture-avatar"
+            src={imagenAvatar}
+            alt={`imagen de ${selectedUser?.username}`}
+          />
         </div>
+      )}
+      {isTyping && (
+        <p
+          className="is-typing fs-1"
+          onClick={handleBackdropClick}
+        >
+          {`${selectedUser.username} está escribiendo`}
+          <span className="points">
+            <span className="point">.</span>
+            <span className="point">.</span>
+            <span className="point">.</span>
+          </span>
+        </p>
       )}
     </div>
   );

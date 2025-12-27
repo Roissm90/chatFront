@@ -1,14 +1,21 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function MessageInput({ enviarMensaje }) {
+export default function MessageInput({ enviarMensaje, onTyping }) {
   const [mensaje, setMensaje] = useState("");
   const textareaRef = useRef(null);
   const initialHeight = window.innerWidth <= 767 ? 36 : 56; 
+  const [typing, setTyping] = useState(false);
+  
+  const timerRef = useRef(null);
 
   const handleSubmit = () => {
     if (!mensaje.trim()) return;
     enviarMensaje(mensaje);
     setMensaje("");
+
+    setTyping(false);
+    onTyping(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
 
     if (textareaRef.current) {
       textareaRef.current.style.height = `${initialHeight}px`;
@@ -16,9 +23,27 @@ export default function MessageInput({ enviarMensaje }) {
   };
 
   const handleChange = (e) => {
-    setMensaje(e.target.value);
-    const textarea = textareaRef.current;
+    const valor = e.target.value;
+    setMensaje(valor);
 
+    if (!typing && valor.length > 0) {
+      setTyping(true);
+      onTyping(true);
+    }
+
+    if (valor.length === 0) {
+      setTyping(false);
+      onTyping(false);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    } else {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setTyping(false);
+        onTyping(false);
+      }, 5000);
+    }
+
+    const textarea = textareaRef.current;
     textarea.style.height = `${initialHeight}px`;
     textarea.style.height = `${textarea.scrollHeight}px`;
   };
@@ -28,7 +53,10 @@ export default function MessageInput({ enviarMensaje }) {
       textareaRef.current.style.height = `${initialHeight}px`;
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, []);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [initialHeight]);
 
   return (
     <div className="message-input">
