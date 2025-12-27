@@ -9,6 +9,7 @@ export default function Chat({
   selectedUser,
   onBack,
   onContactFound,
+  myId
 }) {
   const [mensajes, setMensajes] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -40,6 +41,10 @@ export default function Chat({
           return [...prev, msg];
         });
 
+        if (String(msg.toUserId) === String(myId)) {
+          socket.emit("marcar-visto", { messageId: msg._id });
+        }
+
         onContactFound(selectedUser._id);
       }, 50);
     };
@@ -67,7 +72,7 @@ export default function Chat({
     };
 
     const handleUsuarioEstado = ({ userId, estado }) => {
-      console.log(`🔔 Cambio en tiempo real: ${userId} ahora está ${estado}`);
+      //console.log(`🔔 Cambio en tiempo real: ${userId} ahora está ${estado}`);
       if (String(userId) === String(selectedUser._id)) {
         setOnline(estado === "online");
       }

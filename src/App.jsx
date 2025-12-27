@@ -23,8 +23,6 @@ export default function App() {
   const [misContactosIds, setMisContactosIds] = useState([]);
   const [novedades, setNovedades] = useState([]);
 
-  const [ultimasLecturas, setUltimasLecturas] = useState({});
-
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
     socket.on("init-session", (data) => {
@@ -39,7 +37,7 @@ export default function App() {
     });
 
     socket.on("user-error", (mensaje) => {
-      console.log("⚠️ ERROR DEL SERVIDOR:", mensaje);
+      //console.log("⚠️ ERROR DEL SERVIDOR:", mensaje);
       // Si los datos guardados fallan, limpiamos para evitar bucles
       if (mensaje === "Contraseña incorrecta.") {
         sessionStorage.clear();
@@ -85,43 +83,49 @@ export default function App() {
   // 4. HISTORIAL Y CONTACTOS
   useEffect(() => {
     const handleHistorialGlobal = (mensajes) => {
-      if (!mensajes || mensajes.length === 0 || usuariosGlobales.length === 0)
+      if (
+        !mensajes ||
+        mensajes.length === 0 ||
+        usuariosGlobales.length === 0 ||
+        !myId
+      )
         return;
 
-      const mensajeAjeno = mensajes.find((m) => m.user !== username);
-      // Usamos una comparación segura de strings
+      const msgOtro = mensajes.find(
+        (m) => String(m.fromUserId) !== String(myId)
+      );
+      const idContacto = msgOtro ? msgOtro.fromUserId : mensajes[0].toUserId;
+
       const contacto = usuariosGlobales.find(
-        (u) =>
-          u.username ===
-          (mensajeAjeno
-            ? mensajeAjeno.user
-            : mensajes[0].user === username
-            ? ""
-            : mensajes[0].user)
+        (u) => String(u._id) === String(idContacto)
       );
 
+      //console.log("Mensajes de " + contacto.username + ":", mensajes);
+
       if (contacto) {
+        // 2. Aseguramos que aparezca en la lista de contactos
         setMisContactosIds((prev) => [...new Set([...prev, contacto._id])]);
 
-        const ultimoMsg = mensajes[mensajes.length - 1];
-        if (ultimoMsg.user !== username) {
-          const fechaMsg = new Date(ultimoMsg.timestamp).getTime();
-          const fechaLectura = ultimasLecturas[contacto._id] || 0;
+        // 3. LA LÓGICA DEL BADGE:
+        const tienePendientes = mensajes.some(
+          (m) => String(m.fromUserId) !== String(myId) && m.visto === false
+        );
 
-          if (
-            fechaMsg > fechaLectura &&
-            (!selectedUser || selectedUser._id !== contacto._id)
-          ) {
+        if (tienePendientes) {
+          // Solo ponemos el badge si NO tenemos abierto ese chat ahora mismo
+          if (!selectedUser || selectedUser._id !== contacto._id) {
             setNovedades((prev) => [...new Set([...prev, contacto._id])]);
           }
+        } else {
+          // Si todo está leído, limpiamos el badge por si acaso
+          setNovedades((prev) => prev.filter((id) => id !== contacto._id));
         }
       }
     };
 
     socket.on("historial", handleHistorialGlobal);
     return () => socket.off("historial", handleHistorialGlobal);
-    // IMPORTANTE: selectedUser debe ir completo, pero nunca condicionalmente
-  }, [usuariosGlobales, username, selectedUser, ultimasLecturas]);
+  }, [usuariosGlobales, myId, selectedUser]);
 
   // 5. INVITACIÓN POR URL
   useEffect(() => {
@@ -156,12 +160,10 @@ export default function App() {
   }, [username, selectedUser, usuariosGlobales]);
 
   const seleccionarChat = (user) => {
-    setNovedades((prev) => prev.filter((id) => id !== user._id));
-    setUltimasLecturas((prev) => ({
-      ...prev,
-      [user._id]: Date.now(),
-    }));
     setSelectedUser(user);
+    setNovedades((prev) => prev.filter((id) => id !== user._id));
+
+    socket.emit("marcar-chat-leido", { withUserId: user._id });
   };
 
   const handleLogout = () => {
@@ -195,12 +197,9 @@ export default function App() {
       <Chat
         socket={socket}
         username={username}
+        myId={myId}
         selectedUser={selectedUser}
         onBack={() => {
-          setUltimasLecturas((prev) => ({
-            ...prev,
-            [selectedUser._id]: Date.now(),
-          }));
           setSelectedUser(null);
         }}
         onContactFound={(id) =>

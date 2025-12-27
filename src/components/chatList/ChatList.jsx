@@ -21,9 +21,8 @@ export default function ChatList({
 
   useEffect(() => {
     if (usuarios.length > 0 && miId) {
-      //console.log("Solicitando historiales para novedades...");
       usuarios.forEach((u) => {
-        if (u._id !== miId) {
+        if (String(u._id) !== String(miId)) {
           socket.emit("get-chat", { withUserId: u._id });
         }
       });
@@ -31,7 +30,7 @@ export default function ChatList({
 
     const timer = setTimeout(() => setIsWithoutText(true), 3000);
     return () => clearTimeout(timer);
-  }, [usuarios, socket, miNombre, miId]);
+  }, [usuarios.length, miId]);
 
   const esDesktop = () => {
     return !/Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
