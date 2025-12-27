@@ -9,7 +9,9 @@ export default function Chat({
   selectedUser,
   onBack,
   onContactFound,
-  myId
+  myId,
+  decrypt,
+  encrypt
 }) {
   const [mensajes, setMensajes] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -24,29 +26,26 @@ export default function Chat({
     socket.emit("get-chat", { withUserId: selectedUser._id });
 
     const hHistorial = (msgs) => {
-      setMensajes(msgs || []);
+      const mensajesDescifrados = (msgs || []).map((m) => ({
+        ...m,
+        text: decrypt(m.text),
+      }));
+      setMensajes(mensajesDescifrados || []);
       if (msgs?.length > 0) onContactFound(selectedUser._id);
     };
 
     const hMensaje = (msg) => {
-      setTimeout(() => {
-        setMensajes((prev) => {
-          const existe = prev.some(
-            (m) =>
-              m._id === msg._id ||
-              (m.timestamp === msg.timestamp && m.text === msg.text)
-          );
-          if (existe) return prev;
+      // DESCIFRAR ANTES DE GUARDAR EN EL ESTADO DEL CHAT
+      const mensajeLimpio = {
+        ...msg,
+        text: decrypt(msg.text), // Asegúrate de pasar la función decrypt como prop o importarla
+      };
 
-          return [...prev, msg];
-        });
+      setMensajes((prev) => [...prev, mensajeLimpio]);
 
-        if (String(msg.toUserId) === String(myId)) {
-          socket.emit("marcar-visto", { messageId: msg._id });
-        }
-
-        onContactFound(selectedUser._id);
-      }, 50);
+      if (String(msg.toUserId) === String(myId)) {
+        socket.emit("marcar-visto", { messageId: msg._id });
+      }
     };
 
     socket.on("historial", hHistorial);
@@ -108,7 +107,9 @@ export default function Chat({
 
   const enviarMensaje = (texto) => {
     if (!texto.trim()) return;
-    socket.emit("mensaje", { text: texto, toUserId: selectedUser._id });
+
+    const textoCifrado = encrypt(texto);
+    socket.emit("mensaje", { text: textoCifrado, toUserId: selectedUser._id });
   };
 
   const manejarEscribiendo = (estaEscribiendo) => {
@@ -169,7 +170,10 @@ export default function Chat({
         </button>
       </div>
       <MessageList mensajes={mensajes} username={username} />
-      <MessageInput enviarMensaje={enviarMensaje} onTyping={manejarEscribiendo}/>
+      <MessageInput
+        enviarMensaje={enviarMensaje}
+        onTyping={manejarEscribiendo}
+      />
       {isModalOpen && (
         <div
           className="modal-avatar flex-row justify-center align-center"
@@ -183,10 +187,7 @@ export default function Chat({
         </div>
       )}
       {isTyping && (
-        <p
-          className="is-typing fs-1"
-          onClick={handleBackdropClick}
-        >
+        <p className="is-typing fs-1" onClick={handleBackdropClick}>
           {`${selectedUser.username} está escribiendo`}
           <span className="points">
             <span className="point">.</span>

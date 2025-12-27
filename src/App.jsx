@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import CryptoJS from "crypto-js";
 import UsernameForm from "./components/usernameForm/UsernameForm";
 import ChatList from "./components/chatList/ChatList";
 import Chat from "./components/chat/Chat";
 
+const MASTER_KEY = "CualquierCosaQueTengaNumerosYLetras123456!";
 const socket = io("https://chatback-ily9.onrender.com");
 
 export default function App() {
@@ -22,6 +24,16 @@ export default function App() {
   const [myId, setMyId] = useState("");
   const [misContactosIds, setMisContactosIds] = useState([]);
   const [novedades, setNovedades] = useState([]);
+
+  const encrypt = (text) => CryptoJS.AES.encrypt(text, MASTER_KEY).toString();
+  const decrypt = (cipherText) => {
+    try {
+      const bytes = CryptoJS.AES.decrypt(cipherText, MASTER_KEY);
+      return bytes.toString(CryptoJS.enc.Utf8) || "[Error]";
+    } catch {
+      return "[Cifrado]";
+    }
+  };
 
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
@@ -91,7 +103,13 @@ export default function App() {
       )
         return;
 
-      const msgOtro = mensajes.find(
+      // DESCIFRAMOS LOS MENSAJES NADA MÁS LLEGAR
+      const msgsDescifrados = mensajes.map((m) => ({
+        ...m,
+        text: decrypt(m.text),
+      }));
+
+      const msgOtro = msgsDescifrados.find(
         (m) => String(m.fromUserId) !== String(myId)
       );
       const idContacto = msgOtro ? msgOtro.fromUserId : mensajes[0].toUserId;
@@ -143,21 +161,21 @@ export default function App() {
   // 6. MENSAJES NUEVOS
   useEffect(() => {
     const handleMensajeNovedad = (msg) => {
-      if (
-        msg.user !== username &&
-        (!selectedUser || selectedUser.username !== msg.user)
-      ) {
-        const emisor = usuariosGlobales.find((u) => u.username === msg.user);
-        if (emisor) {
-          setMisContactosIds((prev) => [...new Set([...prev, emisor._id])]);
-          setNovedades((prev) => [...new Set([...prev, emisor._id])]);
+      // Identificamos quién envía por su ID
+      const esMio = String(msg.fromUserId) === String(myId);
+
+      if (!esMio) {
+        // Si no tengo el chat abierto con esa persona, pongo el badge
+        if (!selectedUser || String(selectedUser._id) !== String(msg.fromUserId)) {
+          setMisContactosIds((prev) => [...new Set([...prev, msg.fromUserId])]);
+          setNovedades((prev) => [...new Set([...prev, msg.fromUserId])]);
         }
       }
     };
 
     socket.on("mensaje", handleMensajeNovedad);
     return () => socket.off("mensaje", handleMensajeNovedad);
-  }, [username, selectedUser, usuariosGlobales]);
+  }, [myId, selectedUser]);
 
   const seleccionarChat = (user) => {
     setSelectedUser(user);
@@ -205,6 +223,8 @@ export default function App() {
         onContactFound={(id) =>
           setMisContactosIds((prev) => [...new Set([...prev, id])])
         }
+        decrypt={decrypt}
+        encrypt={encrypt}
       />
     );
   }

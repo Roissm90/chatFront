@@ -156,6 +156,7 @@ export default function UsernameForm({ onSubmit, socket }) {
                 onChange={(e) => setName(e.target.value)}
                 className="input-username fs-2 ml-half"
                 id="username"
+                autoComplete="username"
               />
             </label>
 
@@ -173,6 +174,7 @@ export default function UsernameForm({ onSubmit, socket }) {
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-username fs-2 ml-half"
                 id="email"
+                autoComplete="email"
               />
             </label>
 
