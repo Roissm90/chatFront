@@ -11,7 +11,7 @@ export default function Chat({
   onContactFound,
   myId,
   decrypt,
-  encrypt
+  encrypt,
 }) {
   const [mensajes, setMensajes] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -20,11 +20,12 @@ export default function Chat({
   const [online, setOnline] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
+  // GESTIÓN DE MENSAJES (HISTORIAL, NUEVOS, BORRAR Y EDITAR)
   useEffect(() => {
     if (!selectedUser) return;
-
+    // Pedimos el chat al servidor
     socket.emit("get-chat", { withUserId: selectedUser._id });
-
+    // Función: Recibir historial
     const hHistorial = (msgs) => {
       const mensajesDescifrados = (msgs || []).map((m) => ({
         ...m,
@@ -33,29 +34,38 @@ export default function Chat({
       setMensajes(mensajesDescifrados || []);
       if (msgs?.length > 0) onContactFound(selectedUser._id);
     };
-
+    // Función: Recibir un mensaje nuevo
     const hMensaje = (msg) => {
-      // DESCIFRAR ANTES DE GUARDAR EN EL ESTADO DEL CHAT
-      const mensajeLimpio = {
-        ...msg,
-        text: decrypt(msg.text), // Asegúrate de pasar la función decrypt como prop o importarla
-      };
-
+      const mensajeLimpio = { ...msg, text: decrypt(msg.text) };
       setMensajes((prev) => [...prev, mensajeLimpio]);
-
       if (String(msg.toUserId) === String(myId)) {
         socket.emit("marcar-visto", { messageId: msg._id });
       }
     };
-
+    // BORRAR Y EDITAR EN TIEMPO REAL
+    const hDelete = ({ messageId }) => {
+      setMensajes((prev) => prev.filter((m) => m._id !== messageId));
+    };
+    const hEdit = ({ messageId, newText }) => {
+      setMensajes((prev) =>
+        prev.map((m) =>
+          m._id === messageId ? { ...m, text: decrypt(newText) } : m
+        )
+      );
+    };
+    // Activamos todos los "oídos" del socket
     socket.on("historial", hHistorial);
     socket.on("mensaje", hMensaje);
-
+    socket.on("message-deleted", hDelete);
+    socket.on("message-edited", hEdit);
+    // Limpieza al cerrar el componente para no duplicar eventos
     return () => {
       socket.off("historial", hHistorial);
       socket.off("mensaje", hMensaje);
+      socket.off("message-deleted", hDelete);
+      socket.off("message-edited", hEdit);
     };
-  }, [selectedUser, socket, onContactFound]);
+  }, [selectedUser, socket, onContactFound, myId, decrypt]);
 
   useEffect(() => {
     if (!selectedUser || !socket) return;
@@ -120,6 +130,22 @@ export default function Chat({
     }
   };
 
+  const onDelete = (id) => {
+    socket.emit("delete-message", {
+      messageId: id,
+      toUserId: selectedUser._id,
+    });
+  };
+
+  const onEdit = (id, nuevoTexto) => {
+    const textoCifrado = encrypt(nuevoTexto);
+    socket.emit("edit-message", {
+      messageId: id,
+      newText: textoCifrado,
+      toUserId: selectedUser._id,
+    });
+  };
+
   const imagenAvatar = selectedUser?.avatar || AvatarDefault;
 
   const showModal = () => {
@@ -169,7 +195,12 @@ export default function Chat({
           ←
         </button>
       </div>
-      <MessageList mensajes={mensajes} username={username} />
+      <MessageList
+        mensajes={mensajes}
+        username={username}
+        onDelete={onDelete}
+        onEdit={onEdit}
+      />
       <MessageInput
         enviarMensaje={enviarMensaje}
         onTyping={manejarEscribiendo}
