@@ -74,6 +74,7 @@
         transform: translateY(-50%);
         background-color: $primary-color-dark;
         color: $custom-white;
+        gap: 0.25rem;
       }
 
       .chat-avatar {
@@ -99,17 +100,6 @@
           background-color: $custom-white;
           color: $primary-color-dark;
           transition: all ease 0.5s;
-        }
-      }
-
-      @media (max-width: 767px) {
-        width: calc(100% - 3rem);
-        margin-left: 3rem;
-
-        .chat-avatar {
-          width: 1.5rem;
-          height: 1.5rem;
-          right: calc(100% + 1rem);
         }
       }
     }
@@ -220,6 +210,31 @@
   .chat-list-container {
     border-radius: 0 !important;
 
+    .list-users {
+      li {
+        width: calc(100% - 3rem);
+        margin-left: 3rem;
+
+        .chat-avatar {
+          width: 1.5rem;
+          height: 1.5rem;
+          right: calc(100% + 1rem);
+        }
+
+        .badge-new {
+          width: 1.1rem;
+          height: 1.1rem;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+
+          .count-news-text {
+            display: none;
+          }
+        }
+      }
+    }
+
     .btn-invite {
       border-radius: 50%;
       padding: 1rem;
@@ -228,5 +243,46 @@
         display: none !important;
       }
     }
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0.25;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.25;
+  }
+}
+
+.loading-state {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .loading {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 10px solid $custom-white;
+    border-top-color: $primary-color-dark;
+    animation: loading 1s linear infinite;
+  }
+}
+@keyframes loading {
+  to {
+    transform: rotate(360deg);
   }
 }

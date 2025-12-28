@@ -24,6 +24,7 @@ export default function App() {
   const [myId, setMyId] = useState("");
   const [misContactosIds, setMisContactosIds] = useState([]);
   const [novedades, setNovedades] = useState([]);
+  const [countsNovedades, setCountsNovedades] = useState({});
 
   const encrypt = (text) => CryptoJS.AES.encrypt(text, MASTER_KEY).toString();
   const decrypt = (cipherText) => {
@@ -50,7 +51,6 @@ export default function App() {
 
     socket.on("user-error", (mensaje) => {
       //console.log("⚠️ ERROR DEL SERVIDOR:", mensaje);
-      // Si los datos guardados fallan, limpiamos para evitar bucles
       if (mensaje === "Contraseña incorrecta.") {
         sessionStorage.clear();
         setMyId("");
@@ -121,10 +121,20 @@ export default function App() {
       //console.log("Mensajes de " + contacto.username + ":", mensajes);
 
       if (contacto) {
-        // 2. Aseguramos que aparezca en la lista de contactos
+        // aseguramos que aparezca
         setMisContactosIds((prev) => [...new Set([...prev, contacto._id])]);
 
-        // 3. LA LÓGICA DEL BADGE:
+        //logica conteo leídos
+        const totalNoLeidos = mensajes.filter(
+          (m) => String(m.toUserId) === String(myId) && m.visto === false
+        ).length;
+
+        setCountsNovedades((prev) => ({
+          ...prev,
+          [contacto._id]: totalNoLeidos
+        }));
+
+        //logica del badge
         const tienePendientes = mensajes.some(
           (m) => String(m.fromUserId) !== String(myId) && m.visto === false
         );
@@ -167,6 +177,10 @@ export default function App() {
       if (!esMio) {
         // Si no tengo el chat abierto con esa persona, pongo el badge
         if (!selectedUser || String(selectedUser._id) !== String(msg.fromUserId)) {
+          setCountsNovedades((prev) => ({
+            ...prev,
+            [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1
+          }));
           setMisContactosIds((prev) => [...new Set([...prev, msg.fromUserId])]);
           setNovedades((prev) => [...new Set([...prev, msg.fromUserId])]);
         }
@@ -180,6 +194,10 @@ export default function App() {
   const seleccionarChat = (user) => {
     setSelectedUser(user);
     setNovedades((prev) => prev.filter((id) => id !== user._id));
+    setCountsNovedades((prev) => ({
+      ...prev,
+      [user._id]: 0
+    }));
 
     socket.emit("marcar-chat-leido", { withUserId: user._id });
   };
@@ -239,6 +257,7 @@ export default function App() {
       novedades={novedades}
       socket={socket}
       onLogout={handleLogout}
+      countsNovedades={countsNovedades}
     />
   );
 }

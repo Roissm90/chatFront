@@ -8,6 +8,7 @@
 
   .chat-header {
     background-color: $custom-black;
+    border-radius: 0.75rem 0.75rem 0 0;
 
     .title-chat {
       font-weight: bold;
@@ -156,12 +157,16 @@
 
     &.on {
       background-color: $green-connected;
+      animation: fadeInOut 2s ease-in-out infinite;
     }
   }
 }
 
 @media (max-width: 767px) {
   .chat-container {
+    .chat-header {
+      border-radius: 0;
+    }
     .connected-users {
       left: -1rem;
       border-radius: 0;
@@ -184,5 +189,23 @@
   }
   40% {
     transform: translateY(-0.2rem);
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0.25;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.25;
   }
 }

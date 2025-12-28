@@ -11,6 +11,7 @@ export default function ChatList({
   socket,
   novedades = [],
   onLogout,
+  countsNovedades,
 }) {
   const [isWithoutText, setIsWithoutText] = useState(false);
   const [msgIfCopyOrNotCopy, setmsgIfCopyOrNotCopy] = useState("");
@@ -18,6 +19,17 @@ export default function ChatList({
   const [isCopyVisible, setIsCopyVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const [emptyMessage, setEmptyMessage] = useState("Buscando chats...");
+  const [loadingMessage, setLoadingMessage] = useState(true);
+
+  useEffect(() => {
+    const timerCincoSegundos = setTimeout(() => {
+      setEmptyMessage("No se encontraron chats");
+      setLoadingMessage(false);
+    }, 5000);
+
+    return () => clearTimeout(timerCincoSegundos);
+  }, []);
 
   useEffect(() => {
     if (usuarios.length > 0 && miId) {
@@ -101,61 +113,57 @@ export default function ChatList({
   );
 
   const handleImageUpload = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-  
-      setIsUploading(true);
-      const formData = new FormData();
-      formData.append("avatar", file); 
-  
-      try {
-        const response = await fetch(
-          "https://chatback-ily9.onrender.com/upload-avatar",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-  
-        const data = await response.json();
-  
-        if (data.url) {
-          socket.emit("update-avatar", { url: data.url });
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      const response = await fetch(
+        "https://chatback-ily9.onrender.com/upload-avatar",
+        {
+          method: "POST",
+          body: formData,
         }
-      } catch (error) {
-        console.error("Error al subir imagen:", error);
-        alert("No se pudo actualizar el avatar");
-      } finally {
-        setIsUploading(false);
-        if (e.target) e.target.value = ""; 
+      );
+
+      const data = await response.json();
+
+      if (data.url) {
+        socket.emit("update-avatar", { url: data.url });
       }
-    };
-  
-    const miUsuario = usuarios.find(u => u._id === miId);
-    const miAvatarProp = miUsuario?.avatar || AvatarDefault;
+    } catch (error) {
+      console.error("Error al subir imagen:", error);
+      alert("No se pudo actualizar el avatar");
+    } finally {
+      setIsUploading(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  const miUsuario = usuarios.find((u) => u._id === miId);
+  const miAvatarProp = miUsuario?.avatar || AvatarDefault;
 
   return (
     <div className="chat-list-container pd-2 br-1">
       <div className="flex-row justify-between align-center mb-1">
-        <button 
-            className={`btn-upload-image ${isUploading ? "loading" : ""}`}
-            onClick={() => fileInputRef.current.click()}
-            disabled={isUploading}
-          >
-            <img 
-              src={miAvatarProp} 
-              alt="upload" 
-              className="user-avatar" 
-            />
+        <button
+          className={`btn-upload-image ${isUploading ? "loading" : ""}`}
+          onClick={() => fileInputRef.current.click()}
+          disabled={isUploading}
+        >
+          <img src={miAvatarProp} alt="upload" className="user-avatar" />
         </button>
         <h2 className="fs-3 title-chats">Chats</h2>
 
         {/* INPUT OCULTO AÑADIDO */}
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleImageUpload} 
-          style={{ display: 'none' }} 
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          style={{ display: "none" }}
           accept="image/*"
         />
 
@@ -176,7 +184,7 @@ export default function ChatList({
           title="Cerrar Sesión"
         >
           <span className="text fs-half">Cerrar sesión</span>
-          <img src={Logout} alt="logout" className="picture"/>
+          <img src={Logout} alt="logout" className="picture" />
         </button>
 
         <button
@@ -196,6 +204,7 @@ export default function ChatList({
         {chatsActivos.length > 0 ? (
           chatsActivos.map((u) => {
             const tieneNovedad = novedades.includes(u._id);
+            const cantidad = countsNovedades[u._id] || 0;
 
             return (
               <li
@@ -203,21 +212,31 @@ export default function ChatList({
                 onClick={() => alSeleccionar(u)}
                 className="user-item pd-2 mb-half br-1 fs-2 flex-row justify-between align-center"
               >
-                <img src={u.avatar} className="chat-avatar"/>
+                <img src={u.avatar} className="chat-avatar" />
                 <strong>{u.username}</strong>
-                
+
                 <span className="go fs-1">{">"}</span>
 
                 {tieneNovedad && (
-                  <span className="badge-new fs-1 pd-1 br-1">
-                    Mensajes nuevos
-                  </span>
+                  <p className="badge-new fs-1 pd-1 br-1">
+                    <span className="count-news fs-1">{`${cantidad} `} </span>
+                    <span className="count-news-text fs-1">
+                      Mensajes nuevos
+                    </span>
+                  </p>
                 )}
               </li>
             );
           })
         ) : (
-          <p className="pd-1">Buscando chats...</p>
+          <>
+            <p className="pd-1">{emptyMessage}</p>
+            {loadingMessage && (
+              <div className="loading-state">
+                <div className="loading"></div>
+              </div>
+            )}
+          </>
         )}
       </ul>
     </div>

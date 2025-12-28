@@ -86,23 +86,23 @@ export default function MessageList({
 
       {/* MODAL DE BORRAR */}
       {isToDelete && (
-        <div class="overlay-modal flex-row justify-center align-center">
+        <div className="overlay-modal flex-row justify-center align-center">
           <div className="modal modal-delete br-1">
-            <p className="question fs-2 mb-2">
+            <p className="question fs-2 pd-4">
               ¿Estás seguro que quieres borrar el mensaje?
             </p>
             <div className="wrapper-btns flex-row justify-between">
               <button
-                className="btn"
+                className="btn pd-4"
                 onClick={() => {
                   onDelete(isToDelete);
                   setIsToDelete(null);
                 }}
               >
-                <span className="text fs-1">Sí</span>
+                <span className="text fs-2">Sí</span>
               </button>
-              <button className="btn" onClick={() => setIsToDelete(null)}>
-                <span className="text fs-1">No</span>
+              <button className="btn pd-4" onClick={() => setIsToDelete(null)}>
+                <span className="text fs-2">No</span>
               </button>
             </div>
           </div>
@@ -111,38 +111,41 @@ export default function MessageList({
 
       {/* MODAL DE EDITAR */}
       {isToEdit && (
-        <div class="overlay-modal flex-row justify-center align-center">
+        <div className="overlay-modal flex-row justify-center align-center">
           <div className="modal modal-edit br-1 flex-column justify-center">
-            <textarea
-              className="input-edit fs-2 mb-2 pd-half"
-              value={nuevoTexto}
-              onChange={(e) => setNuevoTexto(e.target.value)}
-              autoFocus
-              id="edit-msg"
-              ref={textAreaEditRef}
-              style={{ minHeight: `${initialHeight}px` }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  onEdit(isToEdit.id, nuevoTexto);
-                  setIsToEdit(null);
-                  setNuevoTexto("");
-                }
-              }}
-            />
+            <div className="container-textarea pd-4">
+              <textarea
+                className="input-edit fs-2 pd-half"
+                value={nuevoTexto}
+                onChange={(e) => setNuevoTexto(e.target.value)}
+                autoFocus
+                id="edit-msg"
+                ref={textAreaEditRef}
+                style={{ minHeight: `${initialHeight}px` }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    onEdit(isToEdit.id, nuevoTexto);
+                    setIsToEdit(null);
+                    setNuevoTexto("");
+                  }
+                }}
+              />
+            </div>
+
             <div className="wrapper-btns flex-row justify-between">
               <button
-                className="btn"
+                className="btn pd-4"
                 onClick={() => {
                   onEdit(isToEdit.id, nuevoTexto);
                   setIsToEdit(null);
                   setNuevoTexto("");
                 }}
               >
-                <span className="text fs-1">Modificar</span>
+                <span className="text fs-2">Modificar</span>
               </button>
-              <button className="btn" onClick={() => setIsToEdit(null)}>
-                <span className="text fs-1">Salir</span>
+              <button className="btn pd-4" onClick={() => setIsToEdit(null)}>
+                <span className="text fs-2">Salir</span>
               </button>
             </div>
           </div>
