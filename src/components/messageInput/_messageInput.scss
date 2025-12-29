@@ -1,7 +1,6 @@
 @use "../../variables" as *;
 
 .message-input {
-  display: flex;
   gap: 1rem;
   position: fixed;
   z-index: 10;
@@ -12,28 +11,91 @@
   max-width: 767px;
   margin: 0 auto;
   padding: 4rem 2rem 2rem;
-  background: linear-gradient(0deg,rgba(25, 109, 245, 1) 0%, rgba(59, 130, 246, 1) 30%, rgba(147, 197, 253, 1) 60%, rgba(147, 197, 253, 0.5) 80%, rgba(147, 197, 253, 0) 100%);
+  background: linear-gradient(
+    0deg,
+    rgba(25, 109, 245, 1) 0%,
+    rgba(59, 130, 246, 1) 30%,
+    rgba(147, 197, 253, 1) 60%,
+    rgba(147, 197, 253, 0.5) 80%,
+    rgba(147, 197, 253, 0) 100%
+  );
   border-radius: 0 0 0.75rem 0.75rem;
 
-  @media (max-width: 767px) {
-    padding: 2rem 1rem 1rem;
-    border-radius: 0;
+  .add-file-button {
+    border: none;
+    outline: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    cursor: pointer;
+    background-color: transparent;
+    position: relative;
+    aspect-ratio: 1;
+
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 100%;
+      display: block;
+      background-color: $custom-white;
+      border-radius: 0.5rem;
+    }
+    &:after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      height: 2px;
+      width: 100%;
+      display: block;
+      background-color: $custom-white;
+      border-radius: 0.5rem;
+    }
+  }
+
+  .add-file {
+    display: none;
   }
 
   .input-message {
-    width: 100%;
+    width: calc(85% - 3.5rem);
     border: 1px solid $primary-color;
     outline: none;
     color: $primary-color-dark;
-    flex: 0.8;
   }
 
   .button-send-message {
-    flex: 0.2;
+    width: calc(10% - 3.5rem);
     color: $custom-white;
     border: none;
     cursor: pointer;
     background-color: transparent;
     font-weight: bold;
+    min-width: fit-content;
+  }
+}
+
+@media (max-width: 767px) {
+  .message-input {
+    padding: 2rem 1rem 1rem;
+    border-radius: 0;
+    gap: 0.5rem;
+
+    .add-file-button {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
+
+    .input-message {
+      width: calc(75% - 1.75rem);
+    }
+
+    .button-send-message {
+      width: calc(20% - 1.75rem);
+    }
   }
 }

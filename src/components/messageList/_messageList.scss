@@ -21,10 +21,26 @@
       overflow-wrap: break-word;
       word-break: break-word;
       hyphens: auto;
+      display: block;
+      margin-bottom: 0.25rem;
+
+      .picture {
+        display: block;
+        width: 100%;
+        max-width: 5rem;
+        margin-left: auto;
+        object-fit: cover;
+        object-position: center;
+      }
+
+      .text-link-download-doc {
+        display: block;
+      }
     }
 
     &.user {
       margin-left: auto;
+      margin-bottom: 0.25rem;
       background-color: $primary-color-dark;
 
       .message-user {
@@ -58,6 +74,16 @@
         color: $custom-black;
         text-align: left;
         margin-right: auto;
+
+        .picture {
+          margin-right: auto;
+          margin-left: 0;
+          filter: invert(1);
+        }
+
+        .text-link-download-doc {
+          margin-left: auto;
+        }
       }
     }
 
@@ -128,6 +154,24 @@
           left: 0.5rem;
         }
       }
+    }
+
+    .image-msg {
+      max-width: 100%;
+      width: 100%;
+      display: block;
+      margin-bottom: 0.25rem;
+
+      .msg-media {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+
+    .msg-media-video {
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 16 / 9;
     }
   }
 

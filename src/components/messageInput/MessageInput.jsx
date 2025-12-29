@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function MessageInput({ enviarMensaje, onTyping }) {
+export default function MessageInput({
+  enviarMensaje,
+  onTyping,
+  onEnviarArchivo,
+}) {
   const [mensaje, setMensaje] = useState("");
   const textareaRef = useRef(null);
   const initialHeight = window.innerWidth <= 767 ? 36 : 56;
   const [typing, setTyping] = useState(false);
-
   const timerRef = useRef(null);
+  const fileInputRef = useRef(null);
+
   const iniciarTimerApagado = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -72,8 +77,32 @@ export default function MessageInput({ enviarMensaje, onTyping }) {
     };
   }, [initialHeight]);
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (onEnviarArchivo) {
+      await onEnviarArchivo(file);
+    }
+
+    e.target.value = "";
+  };
+
   return (
-    <div className="message-input">
+    <div className="message-input flex-row align-center justify-between">
+      <button
+        className="add-file-button"
+        onClick={() => fileInputRef.current.click()}
+        type="button"
+      >
+      </button>
+      <input
+        className="add-file"
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*,video/*,.pdf"
+      />
       <textarea
         ref={textareaRef}
         value={mensaje}

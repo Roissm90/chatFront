@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Delete from "../../../public/images/delete.png";
 import Edit from "../../../public/images/edit.png";
+import Doc from "../../../public/images/doc.png";
 
 export default function MessageList({
   mensajes = [],
@@ -46,43 +47,133 @@ export default function MessageList({
     }
   }, [nuevoTexto, isToEdit]);
 
+  const handleDownload = async (url) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+
+      const fileName = url.split("/").pop() || "archivo-descargado";
+      link.setAttribute("download", fileName);
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error al descargar el archivo:", error);
+      window.open(url, "_blank");
+    }
+  };
+
   return (
     <div ref={listRef} className="message-list" style={{ overflowY: "auto" }}>
-      {mensajes.map((m, i) => (
-        <div
-          key={m._id || `${m.timestamp}-${i}`}
-          className={`message ${
-            m.user === username ? "user" : "other"
-          } br-1 pd-2 mb-half`}
-        >
-          <strong className="message-user mb-half fs-1">{m.user}</strong>
-          <p className="message-text fs-2 mb-half">{m.text}</p>
-          <span className="message-time fs-1">
-            {m.timestamp
-              ? new Date(m.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "--:--"}
-          </span>
-          {m.user === username && (
-            <div className="wrapper-edit-delete flex-row align-center justify-center">
-              <button
-                className="edit"
-                onClick={() => {
-                  setIsToEdit({ id: m._id, text: m.text });
-                  setNuevoTexto(m.text);
-                }}
-              >
-                <img src={Edit} alt="edit image" className="picture" />
-              </button>
-              <button className="delete" onClick={() => setIsToDelete(m._id)}>
-                <img src={Delete} alt="delete image" className="picture" />
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
+      {mensajes.map((m, i) => {
+        const content = m.text || "";
+        const esArchivo = content.startsWith("FILE_URL:");
+        const url = esArchivo ? content.replace("FILE_URL:", "") : null;
+
+        let tipoContenido = "texto";
+        if (esArchivo) {
+          if (/\.(jpeg|jpg|gif|png|webp)$/i.test(url)) {
+            tipoContenido = "imagen";
+          } else if (/\.(mov|mp4|webm|ogg)$/i.test(url)) {
+            tipoContenido = "video";
+          } else {
+            tipoContenido = "documento";
+          }
+        }
+
+        return (
+          <div
+            key={m._id || `${m.timestamp}-${i}`}
+            className={`message ${
+              m.user === username ? "user" : "other"
+            } br-1 pd-2 mb-half`}
+          >
+            <strong className="message-user mb-half fs-1">{m.user}</strong>
+
+            {(() => {
+              if (tipoContenido === "imagen") {
+                return (
+                  <a
+                    className="image-msg"
+                    onClick={() => handleDownload(url)}
+                    title="Clic para descargar"
+                  >
+                    <img
+                      src={url}
+                      alt="Imagen enviada"
+                      className="msg-media br-1"
+                    />
+                  </a>
+                );
+              }
+
+              if (tipoContenido === "video") {
+                return (
+                  <video
+                    src={url}
+                    controls
+                    className="msg-media-video br-1"
+                  ></video>
+                );
+              }
+
+              if (tipoContenido === "documento") {
+                return (
+                  <a
+                    className="message-text link-pdf"
+                    onClick={() => handleDownload(url)}
+                    title="Clic para descargar"
+                  >
+                    <img src={Doc} className="picture" alt="pdf image" />
+                    <span className="text-link-download-doc fs-2">
+                      Click para descargar
+                    </span>
+                  </a>
+                );
+              }
+
+              // Por defecto: Texto normal
+              return <p className="message-text fs-2 mb-half">{content}</p>;
+            })()}
+
+            <span className="message-time fs-1">
+              {m.timestamp
+                ? new Date(m.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "--:--"}
+            </span>
+
+            {m.user === username && (
+              <div className="wrapper-edit-delete flex-row align-center justify-center">
+                {tipoContenido === "texto" && (
+                  <button
+                    className="edit"
+                    onClick={() => {
+                      setIsToEdit({ id: m._id, text: m.text });
+                      setNuevoTexto(m.text);
+                    }}
+                  >
+                    <img src={Edit} alt="edit image" className="picture" />
+                  </button>
+                )}
+
+                <button className="delete" onClick={() => setIsToDelete(m._id)}>
+                  <img src={Delete} alt="delete image" className="picture" />
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {/* MODAL DE BORRAR */}
       {isToDelete && (

@@ -176,6 +176,35 @@ export default function Chat({
     };
   }, [isModalOpen]);
 
+  const onEnviarArchivo = async (archivo) => {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+
+    try {
+      const response = await fetch(
+        "https://chatback-ily9.onrender.com/upload-file",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.url) {
+      const textoEspecial = `FILE_URL:${data.url}`;
+      const textoCifrado = encrypt(textoEspecial);
+      
+      socket.emit("mensaje", { 
+        text: textoCifrado, 
+        toUserId: selectedUser._id 
+      });
+    }
+    } catch (error) {
+      console.error("Error al enviar archivo:", error);
+    }
+  };
+
   return (
     <div className="chat-container">
       <div className="chat-header flex-row justify-between align-center pd-2">
@@ -204,6 +233,7 @@ export default function Chat({
       <MessageInput
         enviarMensaje={enviarMensaje}
         onTyping={manejarEscribiendo}
+        onEnviarArchivo={onEnviarArchivo}
       />
       {isModalOpen && (
         <div
