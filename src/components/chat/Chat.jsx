@@ -53,12 +53,12 @@ export default function Chat({
         )
       );
     };
-    // Activamos todos los "oídos" del socket
+
     socket.on("historial", hHistorial);
     socket.on("mensaje", hMensaje);
     socket.on("message-deleted", hDelete);
     socket.on("message-edited", hEdit);
-    // Limpieza al cerrar el componente para no duplicar eventos
+    
     return () => {
       socket.off("historial", hHistorial);
       socket.off("mensaje", hMensaje);
@@ -178,24 +178,18 @@ export default function Chat({
 
   const onEnviarArchivo = async (archivo) => {
     try {
-      // 1. Enviamos un mensaje de texto normal que sirve de "Placeholder"
       const textoCifradoSubiendo = encrypt("Subiendo archivo...");
       socket.emit("mensaje", {
         text: textoCifradoSubiendo,
         toUserId: selectedUser._id,
       });
 
-      // 2. Creamos un "oído" temporal para capturar el ID que el servidor le asigne a ese mensaje
       const capturarID = async (msgCreado) => {
-        // Verificamos que sea el mensaje que acabamos de enviar nosotros
         if (
           msgCreado.user === username &&
           decrypt(msgCreado.text) === "Subiendo archivo..."
         ) {
-          // Dejamos de escuchar para no interferir con otros mensajes
           socket.off("mensaje", capturarID);
-
-          // 3. Ahora que ya sabemos el ID real (_id) de ese mensaje, subimos el archivo
           const formData = new FormData();
           formData.append("archivo", archivo);
 
@@ -209,12 +203,10 @@ export default function Chat({
           const data = await response.json();
 
           if (data.url) {
-            // 4. LANZAMOS LA EDICIÓN AUTOMÁTICA
-            // Usamos el _id real que nos dio el servidor para que el div NO se borre
             const textoFinalCifrado = encrypt(`FILE_URL:${data.url}`);
 
             socket.emit("edit-message", {
-              messageId: msgCreado._id, // ID real de MongoDB
+              messageId: msgCreado._id,
               newText: textoFinalCifrado,
               toUserId: selectedUser._id,
             });

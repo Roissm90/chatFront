@@ -4,6 +4,7 @@
 @use "./components/messageList/messageList" as messageList;
 @use "./components/usernameForm/usernameForm" as usernameForm;
 @use "./components/chatList/chatList" as chatList;
+@use "./subComponents/loadingSpinner/loadingSpinner" as loadingSpinner;
 
 body {
   background-color: $custom-white;

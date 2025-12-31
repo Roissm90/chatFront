@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Logout from "../../../public/images/logout.png";
-import AvatarDefault from "../../../public/images/user.png"; // Importación necesaria
+import AvatarDefault from "../../../public/images/user.png";
+import LoadingSpinner from "../../subComponents/loadingSpinner/LoadingSpinner";
 
 export default function ChatList({
   usuarios,
@@ -26,7 +27,7 @@ export default function ChatList({
     const timerCincoSegundos = setTimeout(() => {
       setEmptyMessage("No se encontraron chats");
       setLoadingMessage(false);
-    }, 5000);
+    }, 1000);
 
     return () => clearTimeout(timerCincoSegundos);
   }, []);
@@ -158,7 +159,6 @@ export default function ChatList({
         </button>
         <h2 className="fs-3 title-chats">Chats</h2>
 
-        {/* INPUT OCULTO AÑADIDO */}
         <input
           type="file"
           ref={fileInputRef}
@@ -201,7 +201,12 @@ export default function ChatList({
       </div>
 
       <ul className="list-users">
-        {chatsActivos.length > 0 ? (
+        {loadingMessage ? (
+          <>
+            <p className="pd-1 text-searching">{emptyMessage}</p>
+            <LoadingSpinner />
+          </>
+        ) : chatsActivos.length > 0 ? (
           chatsActivos.map((u) => {
             const tieneNovedad = novedades.includes(u._id);
             const cantidad = countsNovedades[u._id] || 0;
@@ -229,14 +234,7 @@ export default function ChatList({
             );
           })
         ) : (
-          <>
-            <p className="pd-1">{emptyMessage}</p>
-            {loadingMessage && (
-              <div className="loading-state">
-                <div className="loading"></div>
-              </div>
-            )}
-          </>
+          <p className="pd-1 text-searching">{emptyMessage}</p>
         )}
       </ul>
     </div>
