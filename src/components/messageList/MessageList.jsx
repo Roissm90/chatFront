@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import Delete from "../../../public/images/delete.png";
-import Edit from "../../../public/images/edit.png";
-import Doc from "../../../public/images/doc.png";
+import Delete from "../../assets/images/delete.png";
+import Edit from "../../assets/images/edit.png";
+import Doc from "../../assets/images/doc.png";
+import LoadingSpinner from "../../subComponents/loadingSpinner/LoadingSpinner";
 
 export default function MessageList({
   mensajes = [],
@@ -75,10 +76,13 @@ export default function MessageList({
       {mensajes.map((m, i) => {
         const content = m.text || "";
         const esArchivo = content.startsWith("FILE_URL:");
+        const estaCargando = content === "Subiendo archivo...";
         const url = esArchivo ? content.replace("FILE_URL:", "") : null;
 
         let tipoContenido = "texto";
-        if (esArchivo) {
+        if (estaCargando) {
+          tipoContenido = "loading";
+        } else if (esArchivo) {
           if (/\.(jpeg|jpg|gif|png|webp)$/i.test(url)) {
             tipoContenido = "imagen";
           } else if (/\.(mov|mp4|webm|ogg)$/i.test(url)) {
@@ -98,6 +102,14 @@ export default function MessageList({
             <strong className="message-user mb-half fs-1">{m.user}</strong>
 
             {(() => {
+              if (tipoContenido === "loading") {
+                return (
+                  <div className="flex-row justify-center pd-1">
+                    <LoadingSpinner />
+                  </div>
+                );
+              }
+
               if (tipoContenido === "imagen") {
                 return (
                   <a

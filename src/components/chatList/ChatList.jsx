@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import Logout from "../../../public/images/logout.png";
-import AvatarDefault from "../../../public/images/user.png";
+import Logout from "../../assets/images/logout.png";
+import AvatarDefault from "../../assets/images/user.png";
 import LoadingSpinner from "../../subComponents/loadingSpinner/LoadingSpinner";
 
 export default function ChatList({

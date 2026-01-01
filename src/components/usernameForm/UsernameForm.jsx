@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import Logo from "../../../public/images/logo_chat.png";
-import Hide from "../../../public/images/hide.png";
-import NoHide from "../../../public/images/no_hide.png";
-import Info from "../../../public/images/info.png";
+import Logo from "../../assets/images/logo_chat.png";
+import Hide from "../../assets/images/hide.png";
+import NoHide from "../../assets/images/no_hide.png";
+import Info from "../../assets/images/info.png";
 
 export default function UsernameForm({ onSubmit, socket }) {
   const [name, setName] = useState("");
@@ -15,10 +15,12 @@ export default function UsernameForm({ onSubmit, socket }) {
   const [telefono, setTelefono] = useState("");
   const [vibrateChat, setVibrateChat] = useState(false);
   const [vibrateInvite, setVibrateInvite] = useState(false);
+  /*
   const [inviteDisabled] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("no-invite") === "true";
   });
+  */
 
   const modalRef = useRef(null);
   const inputTelefonoRef = useRef(null);
@@ -82,11 +84,13 @@ export default function UsernameForm({ onSubmit, socket }) {
     onSubmit(trimmedName, trimmedEmail, password);
   };
 
+  /*
   const handleInviteOpen = () => {
     setTelefono("");
     setIsModalOpen(true);
   };
-
+  */
+ 
   const handleInviteClose = () => setIsModalOpen(false);
 
   const handleInviteSend = () => {

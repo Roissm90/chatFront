@@ -12,10 +12,28 @@
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    border: 10px solid $custom-white;
+    border: 0.6rem solid $custom-white;
     border-top-color: $primary-color-dark;
     animation: loading 1s linear infinite;
   }
+}
+
+.message {
+    &.user {
+        .loading-state {
+            .loading {
+                border-top-color: $secondary-color-op50;
+            }
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    .loading-state {
+        .loading {
+            border: 0.3rem solid $custom-white;
+        }
+    }
 }
 
 @keyframes loading {

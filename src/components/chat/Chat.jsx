@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import MessageList from "../messageList/MessageList";
 import MessageInput from "../messageInput/MessageInput";
-import AvatarDefault from "../../../public/images/user.png";
+import AvatarDefault from "../../assets/images/user.png";
 
 export default function Chat({
   socket,
@@ -15,8 +15,10 @@ export default function Chat({
 }) {
   const [mensajes, setMensajes] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
+  /*
   const [isUploading] = useState(false);
   const fileInputRef = useRef(null);
+  */
   const [online, setOnline] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
