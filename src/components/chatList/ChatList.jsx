@@ -23,7 +23,7 @@ export default function ChatList({
   const [emptyMessage, setEmptyMessage] = useState("Buscando chats...");
   const [loadingMessage, setLoadingMessage] = useState(true);
 
-  //cambair titulo y notificacion
+  // Cambiar titulo y notificacion
   useEffect(() => {
     const totalNovedades = Object.values(countsNovedades).reduce(
       (a, b) => a + b,
@@ -32,13 +32,15 @@ export default function ChatList({
 
     const nombreApp = "Just Message";
 
-    // Dentro del useEffect de ChatList.jsx
     if (totalNovedades > 0) {
       document.title = `(${totalNovedades}) ${nombreApp}`;
 
-      // PRUEBA ESTO: Quita document.hidden temporalmente para ver si salta
-      if (Notification.permission === "granted") {
-        console.log("SISTEMA: Lanzando notificación profesional...");
+      if (
+        typeof window !== "undefined" &&
+        "Notification" in window &&
+        Notification.permission === "granted"
+      ) {
+        console.log("SISTEMA: Lanzando notificación...");
 
         const ultimoId = novedades[novedades.length - 1];
         const usuarioMsg = usuarios.find((u) => u._id === ultimoId);
@@ -46,30 +48,28 @@ export default function ChatList({
           ? `Mensaje de ${usuarioMsg.username}`
           : "Nuevo mensaje";
 
+        // Intentar notificación profesional si hay serviceWorker
         if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.ready.then((registration) => {
-            registration.showNotification(textoNotif, {
-              body: `Tienes ${totalNovedades} mensaje${
-                totalNovedades > 1 ? "s" : ""
-              } sin leer`,
-              tag: "chat-notification",
-              renotify: true,
-              icon: "/logo192.png",
-              requireInteraction: true,
+          navigator.serviceWorker.ready
+            .then((registration) => {
+              registration.showNotification(textoNotif, {
+                body: `Tienes ${totalNovedades} mensaje${
+                  totalNovedades > 1 ? "s" : ""
+                } sin leer`,
+                tag: "chat-notification",
+                renotify: true,
+                requireInteraction: true,
+              });
+            })
+            .catch(() => {
+              // Fallback al método simple
+              new Notification(textoNotif, {
+                body: `Tienes ${totalNovedades} mensaje${
+                  totalNovedades > 1 ? "s" : ""
+                } sin leer`,
+                tag: "chat-notification",
+              });
             });
-          });
-        } else {
-          const notif = new Notification(textoNotif, {
-            body: `Tienes ${totalNovedades} mensaje${
-              totalNovedades > 1 ? "s" : ""
-            } sin leer`,
-            tag: "chat-notification",
-            renotify: true,
-          });
-          notif.onclick = () => {
-            window.focus();
-            notif.close();
-          };
         }
       }
     } else {
