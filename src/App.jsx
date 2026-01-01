@@ -42,7 +42,6 @@ export default function App() {
 
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
-    console.log("Estado actual del permiso:", Notification.permission);
     socket.on("init-session", (data) => {
       setMyId(data.userId);
 

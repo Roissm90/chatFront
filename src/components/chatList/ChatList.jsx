@@ -34,45 +34,39 @@ export default function ChatList({
 
     if (totalNovedades > 0) {
       document.title = `(${totalNovedades}) ${nombreApp}`;
-      /*
-      if (
-        typeof window !== "undefined" &&
-        "Notification" in window &&
-        Notification.permission === "granted"
-      ) {
-        console.log("SISTEMA: Lanzando notificación...");
 
+      // LLAVE DE SEGURIDAD: Preguntamos si Notification existe en este navegador
+      const soporteNotif = typeof window !== "undefined" && "Notification" in window;
+
+      if (soporteNotif && Notification.permission === "granted") {
         const ultimoId = novedades[novedades.length - 1];
         const usuarioMsg = usuarios.find((u) => u._id === ultimoId);
-        const textoNotif = usuarioMsg
-          ? `Mensaje de ${usuarioMsg.username}`
-          : "Nuevo mensaje";
+        const textoNotif = usuarioMsg ? `Mensaje de ${usuarioMsg.username}` : "Nuevo mensaje";
 
-        // Intentar notificación profesional si hay serviceWorker
+        // Si hay Service Worker (Método pro)
         if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.ready
-            .then((registration) => {
-              registration.showNotification(textoNotif, {
-                body: `Tienes ${totalNovedades} mensaje${
-                  totalNovedades > 1 ? "s" : ""
-                } sin leer`,
-                tag: "chat-notification",
-                renotify: true,
-                requireInteraction: true,
-              });
-            })
-            .catch(() => {
-              // Fallback al método simple
-              new Notification(textoNotif, {
-                body: `Tienes ${totalNovedades} mensaje${
-                  totalNovedades > 1 ? "s" : ""
-                } sin leer`,
-                tag: "chat-notification",
-              });
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification(textoNotif, {
+              body: `Tienes ${totalNovedades} mensaje${totalNovedades > 1 ? "s" : ""} sin leer`,
+              tag: "chat-notification",
+              renotify: true,
+              requireInteraction: true,
             });
+          }).catch(() => {
+            // Fallback si falla el SW
+            new Notification(textoNotif, {
+              body: `Tienes ${totalNovedades} mensaje${totalNovedades > 1 ? "s" : ""} sin leer`,
+              tag: "chat-notification",
+            });
+          });
+        } else {
+          // Método simple si no hay SW
+          new Notification(textoNotif, {
+            body: `Tienes ${totalNovedades} mensaje${totalNovedades > 1 ? "s" : ""} sin leer`,
+            tag: "chat-notification",
+          });
         }
       }
-        */
     } else {
       document.title = nombreApp;
     }
