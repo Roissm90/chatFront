@@ -27,6 +27,7 @@ export default function App() {
   const [countsNovedades, setCountsNovedades] = useState({});
 
   const encrypt = (text) => CryptoJS.AES.encrypt(text, MASTER_KEY).toString();
+
   const decrypt = (cipherText) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipherText, MASTER_KEY);
@@ -38,6 +39,7 @@ export default function App() {
 
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
+    console.log("Estado actual del permiso:", Notification.permission);
     socket.on("init-session", (data) => {
       setMyId(data.userId);
 
@@ -131,7 +133,7 @@ export default function App() {
 
         setCountsNovedades((prev) => ({
           ...prev,
-          [contacto._id]: totalNoLeidos
+          [contacto._id]: totalNoLeidos,
         }));
 
         //logica del badge
@@ -176,10 +178,13 @@ export default function App() {
 
       if (!esMio) {
         // Si no tengo el chat abierto con esa persona, pongo el badge
-        if (!selectedUser || String(selectedUser._id) !== String(msg.fromUserId)) {
+        if (
+          !selectedUser ||
+          String(selectedUser._id) !== String(msg.fromUserId)
+        ) {
           setCountsNovedades((prev) => ({
             ...prev,
-            [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1
+            [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1,
           }));
           setMisContactosIds((prev) => [...new Set([...prev, msg.fromUserId])]);
           setNovedades((prev) => [...new Set([...prev, msg.fromUserId])]);
@@ -191,12 +196,42 @@ export default function App() {
     return () => socket.off("mensaje", handleMensajeNovedad);
   }, [myId, selectedUser]);
 
+  // 7. ESCUCHAR BORRADO PARA ACTUALIZAR CONTADORES
+  useEffect(() => {
+    const handleBorradoGlobal = ({fromUserId, visto }) => {
+      if (String(fromUserId) === String(myId)) return;
+      if (visto === true) return;
+
+      setCountsNovedades((prev) => {
+        const actual = prev[fromUserId] || 0;
+        const nuevoValor = actual > 0 ? actual - 1 : 0;
+
+        if (nuevoValor === 0) {
+          setNovedades((prevNov) =>
+            prevNov.filter((id) => String(id) !== String(fromUserId))
+          );
+        }
+
+        return {
+          ...prev,
+          [fromUserId]: nuevoValor,
+        };
+      });
+    };
+
+    socket.on("message-deleted", handleBorradoGlobal);
+
+    return () => {
+      socket.off("message-deleted", handleBorradoGlobal);
+    };
+  }, [myId]);
+
   const seleccionarChat = (user) => {
     setSelectedUser(user);
     setNovedades((prev) => prev.filter((id) => id !== user._id));
     setCountsNovedades((prev) => ({
       ...prev,
-      [user._id]: 0
+      [user._id]: 0,
     }));
 
     socket.emit("marcar-chat-leido", { withUserId: user._id });

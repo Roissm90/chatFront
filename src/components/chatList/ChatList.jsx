@@ -23,6 +23,68 @@ export default function ChatList({
   const [emptyMessage, setEmptyMessage] = useState("Buscando chats...");
   const [loadingMessage, setLoadingMessage] = useState(true);
 
+  //cambair titulo y notificacion
+  useEffect(() => {
+    const totalNovedades = Object.values(countsNovedades).reduce(
+      (a, b) => a + b,
+      0
+    );
+
+    const nombreApp = "Just Message";
+
+    // Dentro del useEffect de ChatList.jsx
+    if (totalNovedades > 0) {
+      document.title = `(${totalNovedades}) ${nombreApp}`;
+
+      // PRUEBA ESTO: Quita document.hidden temporalmente para ver si salta
+      if (Notification.permission === "granted") {
+        console.log("SISTEMA: Lanzando notificación profesional...");
+
+        const ultimoId = novedades[novedades.length - 1];
+        const usuarioMsg = usuarios.find((u) => u._id === ultimoId);
+        const textoNotif = usuarioMsg
+          ? `Mensaje de ${usuarioMsg.username}`
+          : "Nuevo mensaje";
+
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification(textoNotif, {
+              body: `Tienes ${totalNovedades} mensaje${
+                totalNovedades > 1 ? "s" : ""
+              } sin leer`,
+              tag: "chat-notification",
+              renotify: true,
+              icon: "/logo192.png",
+              requireInteraction: true,
+            });
+          });
+        } else {
+          const notif = new Notification(textoNotif, {
+            body: `Tienes ${totalNovedades} mensaje${
+              totalNovedades > 1 ? "s" : ""
+            } sin leer`,
+            tag: "chat-notification",
+            renotify: true,
+          });
+          notif.onclick = () => {
+            window.focus();
+            notif.close();
+          };
+        }
+      }
+    } else {
+      document.title = nombreApp;
+    }
+
+    const limpiarTitulo = () => {
+      document.title =
+        totalNovedades > 0 ? `(${totalNovedades}) ${nombreApp}` : nombreApp;
+    };
+
+    window.addEventListener("focus", limpiarTitulo);
+    return () => window.removeEventListener("focus", limpiarTitulo);
+  }, [countsNovedades, novedades, usuarios]);
+
   useEffect(() => {
     const timerCincoSegundos = setTimeout(() => {
       setEmptyMessage("No se encontraron chats");

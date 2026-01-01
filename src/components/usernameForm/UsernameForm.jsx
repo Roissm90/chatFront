@@ -60,7 +60,7 @@ export default function UsernameForm({ onSubmit, socket }) {
     return () => socket.off("user-error");
   }, [socket]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorServer(""); // Limpiar errores previos
     const trimmedName = name.trim();
@@ -80,7 +80,12 @@ export default function UsernameForm({ onSubmit, socket }) {
       setTimeout(() => setVibrateChat(false), 1000);
       return;
     }
-
+    
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+    }
     onSubmit(trimmedName, trimmedEmail, password);
   };
 
@@ -90,7 +95,7 @@ export default function UsernameForm({ onSubmit, socket }) {
     setIsModalOpen(true);
   };
   */
- 
+
   const handleInviteClose = () => setIsModalOpen(false);
 
   const handleInviteSend = () => {
