@@ -34,7 +34,7 @@ export default function ChatList({
 
     if (totalNovedades > 0) {
       document.title = `(${totalNovedades}) ${nombreApp}`;
-
+      /*
       if (
         typeof window !== "undefined" &&
         "Notification" in window &&
@@ -72,6 +72,7 @@ export default function ChatList({
             });
         }
       }
+        */
     } else {
       document.title = nombreApp;
     }
