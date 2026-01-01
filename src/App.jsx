@@ -4,6 +4,9 @@ import CryptoJS from "crypto-js";
 import UsernameForm from "./components/usernameForm/UsernameForm";
 import ChatList from "./components/chatList/ChatList";
 import Chat from "./components/chat/Chat";
+window.onerror = function(message, source, lineno, colno, error) {
+  alert("ERROR DETECTADO:\n" + message + "\nEn línea: " + lineno);
+};
 
 const MASTER_KEY = "CualquierCosaQueTengaNumerosYLetras123456!";
 const socket = io("https://chatback-ily9.onrender.com");
