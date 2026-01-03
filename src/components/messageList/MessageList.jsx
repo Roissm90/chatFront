@@ -16,9 +16,21 @@ export default function MessageList({
   const [isToDelete, setIsToDelete] = useState(null);
   const [isToEdit, setIsToEdit] = useState(null);
   const [nuevoTexto, setNuevoTexto] = useState("");
+  const [activeMessages, setActiveMessages] = useState({});
 
   const textAreaEditRef = useRef(null);
   const initialHeight = 32;
+
+  useEffect(() => {
+  mensajes.forEach((m) => {
+    const id = m._id || m.timestamp;
+    if (!activeMessages[id]) {
+      setTimeout(() => {
+        setActiveMessages((prev) => ({ ...prev, [id]: true }));
+      }, 100);
+    }
+  });
+}, [mensajes]);
 
   useEffect(() => {
     const list = listRef.current;
@@ -28,7 +40,7 @@ export default function MessageList({
     const ultimoMsg = mensajes[mensajes.length - 1];
     const soyYo = ultimoMsg?.user === username;
 
-    if (esCargaInicial || soyYo) {
+    if (esCargaInicial) {
       setTimeout(() => {
         list.scrollTo({
           top: list.scrollHeight,
@@ -78,6 +90,8 @@ export default function MessageList({
         const esArchivo = content.startsWith("FILE_URL:");
         const estaCargando = content === "Subiendo archivo...";
         const url = esArchivo ? content.replace("FILE_URL:", "") : null;
+        const msgId = m._id || i;
+        const isTranslated = activeMessages[msgId];
 
         let tipoContenido = "texto";
         if (estaCargando) {
@@ -97,7 +111,7 @@ export default function MessageList({
             key={m._id || `${m.timestamp}-${i}`}
             className={`message ${
               m.user === username ? "user" : "other"
-            } br-1 pd-2 mb-half`}
+            } ${isTranslated ? 'translated' : ''} br-1 pd-2 mb-half`}
           >
             <strong className="message-user mb-half fs-1">{m.user}</strong>
 

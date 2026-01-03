@@ -12,6 +12,7 @@
     max-width: 80%;
     min-width: 33%;
     position: relative;
+    transition: transform ease-in-out 0.5s;
 
     &:first-child {
       margin-top: 1rem;
@@ -40,8 +41,16 @@
 
     &.user {
       margin-left: auto;
-      margin-bottom: 0.25rem;
       background-color: $primary-color-dark;
+      transform: translateX(calc(100% + 64px));
+
+      @media (max-width: 767px) {
+        transform: translateX(calc(100% + 32px));
+      }
+
+      &.translated {
+        transform: translateX(0)
+      }
 
       .message-user {
         font-weight: bold;
@@ -61,6 +70,15 @@
     &.other {
       margin-right: auto;
       background-color: $secondary-color;
+      transform: translateX(calc(-100% - 64px));
+
+      @media (max-width: 767px) {
+        transform: translateX(calc(-100% - 32px));
+      }
+
+      &.translated {
+        transform: translateX(0)
+      }
 
       .message-user {
         font-weight: bold;

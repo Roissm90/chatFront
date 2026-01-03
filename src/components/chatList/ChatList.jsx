@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Logout from "../../assets/images/logout.png";
 import AvatarDefault from "../../assets/images/user.png";
+import Bell from "../../assets/images/bell.png";
 import LoadingSpinner from "../../subComponents/loadingSpinner/LoadingSpinner";
 
 export default function ChatList({
@@ -22,6 +23,7 @@ export default function ChatList({
   const fileInputRef = useRef(null);
   const [emptyMessage, setEmptyMessage] = useState("Buscando chats...");
   const [loadingMessage, setLoadingMessage] = useState(true);
+  const [isNotifications, setIsNotifications] = useState(false);
 
   // Cambiar titulo y notificacion
   useEffect(() => {
@@ -30,55 +32,12 @@ export default function ChatList({
       0
     );
 
-    const nombreApp = "Just Message";
-
     if (totalNovedades > 0) {
-      document.title = `(${totalNovedades}) ${nombreApp}`;
-
-      // LLAVE DE SEGURIDAD: Preguntamos si Notification existe en este navegador
-      const soporteNotif = typeof window !== "undefined" && "Notification" in window;
-
-      if (soporteNotif && Notification.permission === "granted") {
-        const ultimoId = novedades[novedades.length - 1];
-        const usuarioMsg = usuarios.find((u) => u._id === ultimoId);
-        const textoNotif = usuarioMsg ? `Mensaje de ${usuarioMsg.username}` : "Nuevo mensaje";
-
-        // Si hay Service Worker (Método pro)
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.ready.then((registration) => {
-            registration.showNotification(textoNotif, {
-              body: `Tienes ${totalNovedades} mensaje${totalNovedades > 1 ? "s" : ""} sin leer`,
-              tag: "chat-notification",
-              renotify: true,
-              requireInteraction: true,
-            });
-          }).catch(() => {
-            // Fallback si falla el SW
-            new Notification(textoNotif, {
-              body: `Tienes ${totalNovedades} mensaje${totalNovedades > 1 ? "s" : ""} sin leer`,
-              tag: "chat-notification",
-            });
-          });
-        } else {
-          // Método simple si no hay SW
-          new Notification(textoNotif, {
-            body: `Tienes ${totalNovedades} mensaje${totalNovedades > 1 ? "s" : ""} sin leer`,
-            tag: "chat-notification",
-          });
-        }
-      }
+      document.title = `(${totalNovedades}) Just Message`;
     } else {
-      document.title = nombreApp;
+      document.title = "Just Message";
     }
-
-    const limpiarTitulo = () => {
-      document.title =
-        totalNovedades > 0 ? `(${totalNovedades}) ${nombreApp}` : nombreApp;
-    };
-
-    window.addEventListener("focus", limpiarTitulo);
-    return () => window.removeEventListener("focus", limpiarTitulo);
-  }, [countsNovedades, novedades, usuarios]);
+  }, [countsNovedades]);
 
   useEffect(() => {
     const timerCincoSegundos = setTimeout(() => {
@@ -145,12 +104,10 @@ export default function ChatList({
 
   const mostrarMensajeCopiado = (texto, tiempo = 2000) => {
     setmsgIfCopyOrNotCopy(texto);
-    setIsCopyVisible(false);
 
     setTimeout(() => {
       setIsCopyVisible(true);
-    }, 50);
-
+    }, 1)
     clearTimeout(mostrarMensajeCopiado._timeout);
     mostrarMensajeCopiado._timeout = setTimeout(() => {
       setIsCopyVisible(false);
@@ -201,6 +158,27 @@ export default function ChatList({
     }
   };
 
+  const pedirPermisoNotificaciones = async () => {
+    if (!("Notification" in window)) {
+      setIsNotifications(false);
+      alert("Tu navegador no soporta notificaciones.");
+      return;
+    }
+
+    const permiso = await Notification.requestPermission();
+
+    if (permiso === "granted") {
+      setIsNotifications(true);
+      alert("¡Genial! Notificaciones activadas.");
+      new Notification("Just Message", {
+        body: "Las notificaciones están activas",
+      });
+    } else {
+      setIsNotifications(false);
+      alert("No se han activado las notificaciones.");
+    }
+  };
+
   const miUsuario = usuarios.find((u) => u._id === miId);
   const miAvatarProp = miUsuario?.avatar || AvatarDefault;
 
@@ -215,6 +193,17 @@ export default function ChatList({
           <img src={miAvatarProp} alt="upload" className="user-avatar" />
         </button>
         <h2 className="fs-3 title-chats">Chats</h2>
+        <button
+          className={`btn-notifications ${isNotifications ? "on" : ""}`}
+          onClick={pedirPermisoNotificaciones}
+          title={`${
+            isNotifications
+              ? "Desactivar notificaciones"
+              : "Activar notificaciones"
+          }`}
+        >
+          <img src={Bell} alt="camapana de notificaciones" />
+        </button>
 
         <input
           type="file"

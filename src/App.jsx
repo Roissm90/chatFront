@@ -4,7 +4,7 @@ import CryptoJS from "crypto-js";
 import UsernameForm from "./components/usernameForm/UsernameForm";
 import ChatList from "./components/chatList/ChatList";
 import Chat from "./components/chat/Chat";
-window.onerror = function(message, source, lineno, colno, error) {
+window.onerror = function (message, source, lineno, colno, error) {
   alert("ERROR DETECTADO:\n" + message + "\nEn línea: " + lineno);
 };
 
@@ -175,11 +175,9 @@ export default function App() {
   // 6. MENSAJES NUEVOS
   useEffect(() => {
     const handleMensajeNovedad = (msg) => {
-      // Identificamos quién envía por su ID
       const esMio = String(msg.fromUserId) === String(myId);
 
       if (!esMio) {
-        // Si no tengo el chat abierto con esa persona, pongo el badge
         if (
           !selectedUser ||
           String(selectedUser._id) !== String(msg.fromUserId)
@@ -188,19 +186,34 @@ export default function App() {
             ...prev,
             [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1,
           }));
-          setMisContactosIds((prev) => [...new Set([...prev, msg.fromUserId])]);
-          setNovedades((prev) => [...new Set([...prev, msg.fromUserId])]);
+          setNovedades((prev) => [...prev, msg.fromUserId]);
+
+          if (Notification.permission === "granted") {
+            const usuarioMsg = usuariosGlobales.find(
+              (u) => u._id === msg.fromUserId
+            );
+            new Notification(
+              usuarioMsg
+                ? `Mensaje de ${usuarioMsg.username}`
+                : "Nuevo mensaje",
+              {
+                body: "Tienes mensajes pendientes",
+                tag: "chat-notification",
+                renotify: true,
+              }
+            );
+          }
         }
       }
     };
 
     socket.on("mensaje", handleMensajeNovedad);
     return () => socket.off("mensaje", handleMensajeNovedad);
-  }, [myId, selectedUser]);
+  }, [myId, selectedUser, usuariosGlobales]);
 
   // 7. ESCUCHAR BORRADO PARA ACTUALIZAR CONTADORES
   useEffect(() => {
-    const handleBorradoGlobal = ({fromUserId, visto }) => {
+    const handleBorradoGlobal = ({ fromUserId, visto }) => {
       if (String(fromUserId) === String(myId)) return;
       if (visto === true) return;
 
