@@ -7,6 +7,35 @@
   padding: 2rem;
   padding-bottom: 10rem;
 
+  .down-btn {
+    position: absolute;
+    bottom: 8rem;
+    right: 5%;
+    display: flex;
+    border: none;
+    outline: none;
+    z-index: 11;
+    border-radius: 50%;
+    background-color: $custom-black;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    
+    img {
+      width: 60%;
+      height: 60%;
+      object-fit: cover;
+      object-position: center;
+      transform: rotate(-90deg);
+    }
+
+    @media (max-width: 767px) {
+      width: 1.5rem;
+      height: 1.5rem;
+      bottom: 4rem;
+    }
+  }
+
   .message {
     width: fit-content;
     max-width: 80%;
@@ -49,7 +78,7 @@
       }
 
       &.translated {
-        transform: translateX(0)
+        transform: translateX(0);
       }
 
       .message-user {
@@ -77,7 +106,7 @@
       }
 
       &.translated {
-        transform: translateX(0)
+        transform: translateX(0);
       }
 
       .message-user {

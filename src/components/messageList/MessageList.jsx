@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Delete from "../../assets/images/delete.png";
 import Edit from "../../assets/images/edit.png";
 import Doc from "../../assets/images/doc.png";
+import Arrow from "../../assets/images/arrow.png";
 import LoadingSpinner from "../../subComponents/loadingSpinner/LoadingSpinner";
 
 export default function MessageList({
@@ -17,49 +18,31 @@ export default function MessageList({
   const [isToEdit, setIsToEdit] = useState(null);
   const [nuevoTexto, setNuevoTexto] = useState("");
   const [activeMessages, setActiveMessages] = useState({});
+  const [newMsgs, setNewMsgs] = useState(false);
 
   const textAreaEditRef = useRef(null);
   const initialHeight = 32;
 
-  useEffect(() => {
-  mensajes.forEach((m) => {
-    const id = m._id || m.timestamp;
-    if (!activeMessages[id]) {
-      setTimeout(() => {
-        setActiveMessages((prev) => ({ ...prev, [id]: true }));
-      }, 100);
-    }
-  });
-}, [mensajes]);
+  const scrollBottomWithBtn = () => {
+    listRef.current.scrollTo({
+      top: listRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+    setNewMsgs(false);
+  };
 
-  useEffect(() => {
+  const handleScroll = () => {
     const list = listRef.current;
-    if (!list || mensajes.length === 0) return;
+    if (!list) return;
 
-    const esCargaInicial = totalPrevio.current === 0;
-    //const ultimoMsg = mensajes[mensajes.length - 1];
-    //const me = ultimoMsg?.user === username;
-    //const other = !(ultimoMsg?.user === username);
+    const margin = 50;
+    const isDown =
+      list.scrollTop + list.clientHeight >= list.scrollHeight - margin;
 
-    /*if (esCargaInicial || other || me) {*/
-      setTimeout(() => {
-        list.scrollTo({
-          top: list.scrollHeight,
-          behavior: esCargaInicial ? "auto" : "smooth",
-        });
-      }, 60);
-    /*}*/
-
-    totalPrevio.current = mensajes.length;
-  }, [mensajes.length]);
-
-  useEffect(() => {
-    if (isToEdit && textAreaEditRef.current) {
-      const textarea = textAreaEditRef.current;
-      textarea.style.height = `${initialHeight}px`;
-      textarea.style.height = `${textarea.scrollHeight}px`;
+    if (isDown && newMsgs) {
+      setNewMsgs(false);
     }
-  }, [nuevoTexto, isToEdit]);
+  };
 
   const handleDownload = async (url) => {
     try {
@@ -84,8 +67,76 @@ export default function MessageList({
     }
   };
 
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || mensajes.length === 0) return;
+
+    const isCleared = mensajes.length < totalPrevio.current;
+
+    const esCargaInicial = totalPrevio.current === 0;
+    const lastMsg = mensajes[mensajes.length - 1];
+    const mine = lastMsg?.user === username;
+    const other = !mine;
+
+    const margin = 50;
+    const isDown =
+      list.scrollTop + list.clientHeight >= list.scrollHeight - margin;
+
+    if (isCleared && !esCargaInicial) {
+      totalPrevio.current = mensajes.length;
+      return; 
+    }
+
+    if (esCargaInicial || mine || (other && isDown)) {
+      setTimeout(() => {
+        setNewMsgs(false);
+        list.scrollTo({
+          top: list.scrollHeight,
+          behavior: esCargaInicial ? "auto" : "smooth",
+        });
+      }, 60);
+    } else if (other && !isDown) {
+      setTimeout(() => setNewMsgs(true), 0);
+    }
+
+    totalPrevio.current = mensajes.length;
+  }, [mensajes.length, username]);
+
+  useEffect(() => {
+    mensajes.forEach((m) => {
+      const id = m._id || m.timestamp;
+      if (!activeMessages[id]) {
+        setTimeout(() => {
+          setActiveMessages((prev) => ({ ...prev, [id]: true }));
+        }, 100);
+      }
+    });
+  }, [mensajes]);
+
+  useEffect(() => {
+    if (isToEdit && textAreaEditRef.current) {
+      const textarea = textAreaEditRef.current;
+      textarea.style.height = `${initialHeight}px`;
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [nuevoTexto, isToEdit]);
+
   return (
-    <div ref={listRef} className="message-list" style={{ overflowY: "auto" }}>
+    <div
+      ref={listRef}
+      className="message-list"
+      style={{ overflowY: "auto" }}
+      onScroll={handleScroll}
+    >
+      {newMsgs && (
+        <button
+          className="down-btn flex-row align-center justify-center"
+          title="bajar abajo"
+          onClick={scrollBottomWithBtn}
+        >
+          <img src={Arrow} alt="flecha abajo" />
+        </button>
+      )}
       {mensajes.map((m, i) => {
         const content = m.text || "";
         const esArchivo = content.startsWith("FILE_URL:");
@@ -110,9 +161,9 @@ export default function MessageList({
         return (
           <div
             key={m._id || `${m.timestamp}-${i}`}
-            className={`message ${
-              m.user === username ? "user" : "other"
-            } ${isTranslated ? 'translated' : ''} br-1 pd-2 mb-half`}
+            className={`message ${m.user === username ? "user" : "other"} ${
+              isTranslated ? "translated" : ""
+            } br-1 pd-2 mb-half`}
           >
             <strong className="message-user mb-half fs-1">{m.user}</strong>
 
