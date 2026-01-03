@@ -40,6 +40,30 @@ export default function App() {
     }
   };
 
+
+  const seleccionarChat = (user) => {
+    setSelectedUser(user);
+    setNovedades((prev) => prev.filter((id) => id !== user._id));
+    setCountsNovedades((prev) => ({
+      ...prev,
+      [user._id]: 0,
+    }));
+
+    socket.emit("marcar-chat-leido", { withUserId: user._id });
+  };
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    setUsername("");
+    setEmail("");
+    setPassword("");
+    setMyId("");
+    setSelectedUser(null);
+    socket.disconnect();
+    socket.connect();
+  };
+
+
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
     socket.on("init-session", (data) => {
@@ -196,24 +220,27 @@ export default function App() {
             const usuarioMsg = usuariosGlobales.find(
               (u) => String(u._id) === String(msg.fromUserId)
             );
-            const titulo = usuarioMsg
-              ? `Mensaje de ${usuarioMsg.username}`
-              : "Nuevo mensaje";
+            const titulo = 'Just Message';
+            const body = usuarioMsg
+              ? `Tienes un mensaje de ${usuarioMsg.username}`
+              : "Tienes un mensaje";
 
+            const avatarUsuario = usuarioMsg?.avatar || "https://res.cloudinary.com/do0s2lutu/image/upload/v1766779509/user_l8spmu.png";
+            
             try {
               const notif = new Notification(titulo, {
-                body: `Nuevo mensaje de ${
-                  usuarioMsg?.username || "un usuario"
-                }`,
-                icon: "/favicon.ico",
+                body: body,
+                icon: avatarUsuario,
                 renotify: true,
-                tag: Math.random().toString(),
+                tag: msg._id,
                 silent: false,
+                image: window.location.origin + "/public/logo_chat_icon.png"
               });
+              console.log(notif.image)
 
               notif.onclick = () => {
                 window.focus();
-                //seleccionarChat(usuarioMsg);
+                seleccionarChat(usuarioMsg);
               };
             } catch (error) {
               console.error("Error al crear el objeto Notification:", error);
@@ -258,28 +285,6 @@ export default function App() {
       socket.off("message-deleted", handleBorradoGlobal);
     };
   }, [myId]);
-
-  const seleccionarChat = (user) => {
-    setSelectedUser(user);
-    setNovedades((prev) => prev.filter((id) => id !== user._id));
-    setCountsNovedades((prev) => ({
-      ...prev,
-      [user._id]: 0,
-    }));
-
-    socket.emit("marcar-chat-leido", { withUserId: user._id });
-  };
-
-  const handleLogout = () => {
-    sessionStorage.clear();
-    setUsername("");
-    setEmail("");
-    setPassword("");
-    setMyId("");
-    setSelectedUser(null);
-    socket.disconnect();
-    socket.connect();
-  };
 
   // --- VISTAS ---
   if (!myId) {
