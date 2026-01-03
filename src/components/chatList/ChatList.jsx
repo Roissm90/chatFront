@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Logout from "../../assets/images/logout.png";
 import AvatarDefault from "../../assets/images/user.png";
 import Bell from "../../assets/images/bell.png";
+import Bass from "../../assets/images/bass.png";
 import LoadingSpinner from "../../subComponents/loadingSpinner/LoadingSpinner";
 
 export default function ChatList({
@@ -14,6 +15,8 @@ export default function ChatList({
   novedades = [],
   onLogout,
   countsNovedades,
+  isNotifications,
+  onToggleNotifications
 }) {
   const [isWithoutText, setIsWithoutText] = useState(false);
   const [msgIfCopyOrNotCopy, setmsgIfCopyOrNotCopy] = useState("");
@@ -23,7 +26,6 @@ export default function ChatList({
   const fileInputRef = useRef(null);
   const [emptyMessage, setEmptyMessage] = useState("Buscando chats...");
   const [loadingMessage, setLoadingMessage] = useState(true);
-  const [isNotifications, setIsNotifications] = useState(false);
 
   // Cambiar titulo y notificacion
   useEffect(() => {
@@ -107,7 +109,7 @@ export default function ChatList({
 
     setTimeout(() => {
       setIsCopyVisible(true);
-    }, 1)
+    }, 1);
     clearTimeout(mostrarMensajeCopiado._timeout);
     mostrarMensajeCopiado._timeout = setTimeout(() => {
       setIsCopyVisible(false);
@@ -158,33 +160,12 @@ export default function ChatList({
     }
   };
 
-  const pedirPermisoNotificaciones = async () => {
-    if (!("Notification" in window)) {
-      setIsNotifications(false);
-      alert("Tu navegador no soporta notificaciones.");
-      return;
-    }
-
-    const permiso = await Notification.requestPermission();
-
-    if (permiso === "granted") {
-      setIsNotifications(true);
-      alert("¡Genial! Notificaciones activadas.");
-      new Notification("Just Message", {
-        body: "Las notificaciones están activas",
-      });
-    } else {
-      setIsNotifications(false);
-      alert("No se han activado las notificaciones.");
-    }
-  };
-
   const miUsuario = usuarios.find((u) => u._id === miId);
   const miAvatarProp = miUsuario?.avatar || AvatarDefault;
 
   return (
     <div className="chat-list-container pd-2 br-1">
-      <div className="flex-row justify-between align-center mb-1">
+      <div className="flex-row justify-between align-center mb-2">
         <button
           className={`btn-upload-image ${isUploading ? "loading" : ""}`}
           onClick={() => fileInputRef.current.click()}
@@ -195,14 +176,14 @@ export default function ChatList({
         <h2 className="fs-3 title-chats">Chats</h2>
         <button
           className={`btn-notifications ${isNotifications ? "on" : ""}`}
-          onClick={pedirPermisoNotificaciones}
+          onClick={onToggleNotifications}
           title={`${
             isNotifications
               ? "Desactivar notificaciones"
               : "Activar notificaciones"
           }`}
         >
-          <img src={Bell} alt="camapana de notificaciones" />
+          <img src={Bass} alt="camapana de notificaciones" />
         </button>
 
         <input

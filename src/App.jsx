@@ -28,6 +28,40 @@ export default function App() {
   const [misContactosIds, setMisContactosIds] = useState([]);
   const [novedades, setNovedades] = useState([]);
   const [countsNovedades, setCountsNovedades] = useState({});
+  const [isNotifications, setIsNotifications] = useState(
+    () => Notification.permission === "granted"
+  );
+
+  const pedirPermisoNotificaciones = async () => {
+    if (!("Notification" in window)) {
+      setIsNotifications(false);
+      alert("Tu navegador no soporta notificaciones.");
+      return;
+    }
+
+    const permiso = await Notification.requestPermission();
+
+    if (permiso === "granted") {
+      if (isNotifications) {
+        setIsNotifications(false);
+        new Notification("Just Message", {
+          body: "Notificaciones desactivadas",
+          icon: "/logo_chat_icon.png",
+        });
+      } else {
+        setIsNotifications(true);
+        new Notification("Just Message", {
+          body: "Notificaciones activadas",
+          icon: "/logo_chat_icon.png",
+        });
+      }
+    } else if (permiso === "denied") {
+      setIsNotifications(false);
+      alert(
+        "Has bloqueado las notificaciones. Por favor, actívalas haciendo clic en el candado de la barra de direcciones."
+      );
+    }
+  };
 
   const encrypt = (text) => CryptoJS.AES.encrypt(text, MASTER_KEY).toString();
 
@@ -39,7 +73,6 @@ export default function App() {
       return "[Cifrado]";
     }
   };
-
 
   const seleccionarChat = (user) => {
     setSelectedUser(user);
@@ -62,7 +95,6 @@ export default function App() {
     socket.disconnect();
     socket.connect();
   };
-
 
   // 1. ESCUCHAR EVENTOS DEL SERVIDOR
   useEffect(() => {
@@ -216,17 +248,19 @@ export default function App() {
 
           const permiso = Notification.permission;
 
-          if (permiso === "granted") {
+          if (permiso === "granted" && isNotifications) {
             const usuarioMsg = usuariosGlobales.find(
               (u) => String(u._id) === String(msg.fromUserId)
             );
-            const titulo = 'Just Message';
+            const titulo = "Just Message";
             const body = usuarioMsg
               ? `Tienes un mensaje de ${usuarioMsg.username}`
               : "Tienes un mensaje";
 
-            const avatarUsuario = usuarioMsg?.avatar || "https://res.cloudinary.com/do0s2lutu/image/upload/v1766779509/user_l8spmu.png";
-            
+            const avatarUsuario =
+              usuarioMsg?.avatar ||
+              "https://res.cloudinary.com/do0s2lutu/image/upload/v1766779509/user_l8spmu.png";
+
             try {
               const notif = new Notification(titulo, {
                 body: body,
@@ -234,9 +268,9 @@ export default function App() {
                 renotify: true,
                 tag: msg._id,
                 silent: false,
-                image: window.location.origin + "/public/logo_chat_icon.png"
+                image: window.location.origin + "/public/logo_chat_icon.png",
               });
-              console.log(notif.image)
+              console.log(notif);
 
               notif.onclick = () => {
                 window.focus();
@@ -254,7 +288,7 @@ export default function App() {
 
     socket.on("mensaje", handleMensajeNovedad);
     return () => socket.off("mensaje", handleMensajeNovedad);
-  }, [myId, selectedUser, usuariosGlobales]);
+  }, [myId, selectedUser, usuariosGlobales, isNotifications]);
 
   // 7. ESCUCHAR BORRADO PARA ACTUALIZAR CONTADORES
   useEffect(() => {
@@ -331,6 +365,8 @@ export default function App() {
       socket={socket}
       onLogout={handleLogout}
       countsNovedades={countsNovedades}
+      isNotifications={isNotifications}
+      onToggleNotifications={pedirPermisoNotificaciones}
     />
   );
 }
