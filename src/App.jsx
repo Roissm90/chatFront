@@ -178,30 +178,48 @@ export default function App() {
       const esMio = String(msg.fromUserId) === String(myId);
 
       if (!esMio) {
-        if (
-          !selectedUser ||
-          String(selectedUser._id) !== String(msg.fromUserId)
-        ) {
+        const idSeleccionado = selectedUser
+          ? String(selectedUser._id)
+          : "Ninguno";
+        const esChatAbierto = idSeleccionado === String(msg.fromUserId);
+
+        if (!esChatAbierto) {
           setCountsNovedades((prev) => ({
             ...prev,
             [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1,
           }));
           setNovedades((prev) => [...prev, msg.fromUserId]);
 
-          if (Notification.permission === "granted") {
+          const permiso = Notification.permission;
+
+          if (permiso === "granted") {
             const usuarioMsg = usuariosGlobales.find(
-              (u) => u._id === msg.fromUserId
+              (u) => String(u._id) === String(msg.fromUserId)
             );
-            new Notification(
-              usuarioMsg
-                ? `Mensaje de ${usuarioMsg.username}`
-                : "Nuevo mensaje",
-              {
-                body: "Tienes mensajes pendientes",
-                tag: "chat-notification",
+            const titulo = usuarioMsg
+              ? `Mensaje de ${usuarioMsg.username}`
+              : "Nuevo mensaje";
+
+            try {
+              const notif = new Notification(titulo, {
+                body: `Nuevo mensaje de ${
+                  usuarioMsg?.username || "un usuario"
+                }`,
+                icon: "/favicon.ico",
                 renotify: true,
-              }
-            );
+                tag: Math.random().toString(),
+                silent: false,
+              });
+
+              notif.onclick = () => {
+                window.focus();
+                //seleccionarChat(usuarioMsg);
+              };
+            } catch (error) {
+              console.error("Error al crear el objeto Notification:", error);
+            }
+          } else {
+            console.warn("Permiso denegado o no solicitado");
           }
         }
       }
