@@ -71,32 +71,35 @@ export default function MessageList({
     const list = listRef.current;
     if (!list || mensajes.length === 0) return;
 
-    const isCleared = mensajes.length < totalPrevio.current;
-
     const esCargaInicial = totalPrevio.current === 0;
+    const esBorrado = mensajes.length < totalPrevio.current;
+
+    // 1. Si es borrado, ignoramos
+    if (esBorrado && !esCargaInicial) {
+      totalPrevio.current = mensajes.length;
+      return;
+    }
+
+    // 2. CAPTURA INMEDIATA: ¿Estaba el usuario abajo JUSTO ANTES de procesar el nuevo mensaje?
+    // Usamos un margen un poco más grande (100px) para compensar el renderizado
+    const margin = 100;
+    const wasDown =
+      list.scrollTop + list.clientHeight >= list.scrollHeight - margin;
+
     const lastMsg = mensajes[mensajes.length - 1];
     const mine = lastMsg?.user === username;
     const other = !mine;
 
-    const margin = 50;
-    const isDown =
-      list.scrollTop + list.clientHeight >= list.scrollHeight - margin;
-
-    if (isCleared && !esCargaInicial) {
-      totalPrevio.current = mensajes.length;
-      return; 
-    }
-
-    if (esCargaInicial || mine || (other && isDown)) {
+    if (esCargaInicial || mine || (other && wasDown)) {
       setTimeout(() => {
         setNewMsgs(false);
         list.scrollTo({
           top: list.scrollHeight,
           behavior: esCargaInicial ? "auto" : "smooth",
         });
-      }, 60);
-    } else if (other && !isDown) {
-      setTimeout(() => setNewMsgs(true), 0);
+      }, 30);
+    } else if (other && !wasDown) {
+      setTimeout(() => {setNewMsgs(true)}, 0);
     }
 
     totalPrevio.current = mensajes.length;
