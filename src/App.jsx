@@ -28,9 +28,12 @@ export default function App() {
   const [misContactosIds, setMisContactosIds] = useState([]);
   const [novedades, setNovedades] = useState([]);
   const [countsNovedades, setCountsNovedades] = useState({});
-  const [isNotifications, setIsNotifications] = useState(
-    () => Notification.permission === "granted"
-  );
+  const [isNotifications, setIsNotifications] = useState(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      return Notification.permission === "granted";
+    }
+    return false;
+  });
 
   const pedirPermisoNotificaciones = async () => {
     if (!("Notification" in window)) {
