@@ -37,20 +37,21 @@ export default function MessageList({
     if (!list || mensajes.length === 0) return;
 
     const esCargaInicial = totalPrevio.current === 0;
-    const ultimoMsg = mensajes[mensajes.length - 1];
-    const soyYo = ultimoMsg?.user === username;
+    //const ultimoMsg = mensajes[mensajes.length - 1];
+    //const me = ultimoMsg?.user === username;
+    //const other = !(ultimoMsg?.user === username);
 
-    if (esCargaInicial) {
+    /*if (esCargaInicial || other || me) {*/
       setTimeout(() => {
         list.scrollTo({
           top: list.scrollHeight,
           behavior: esCargaInicial ? "auto" : "smooth",
         });
       }, 60);
-    }
+    /*}*/
 
     totalPrevio.current = mensajes.length;
-  }, [mensajes.length, username]);
+  }, [mensajes.length]);
 
   useEffect(() => {
     if (isToEdit && textAreaEditRef.current) {

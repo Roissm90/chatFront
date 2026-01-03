@@ -4,7 +4,7 @@ import CryptoJS from "crypto-js";
 import UsernameForm from "./components/usernameForm/UsernameForm";
 import ChatList from "./components/chatList/ChatList";
 import Chat from "./components/chat/Chat";
-window.onerror = function (message, source, lineno, colno, error) {
+window.onerror = function (message, source, lineno) {
   alert("ERROR DETECTADO:\n" + message + "\nEn línea: " + lineno);
 };
 
