@@ -2,6 +2,7 @@
 
 .message-list {
   max-height: calc(100dvh - 5rem) !important;
+  overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: none;
   padding: 2rem;

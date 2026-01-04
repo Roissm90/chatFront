@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import Delete from "../../assets/images/delete.png";
 import Edit from "../../assets/images/edit.png";
 import Doc from "../../assets/images/doc.png";
@@ -19,15 +19,18 @@ export default function MessageList({
   const [nuevoTexto, setNuevoTexto] = useState("");
   const [activeMessages, setActiveMessages] = useState({});
   const [newMsgs, setNewMsgs] = useState(false);
+  const [deberiaBajar, setDeberiaBajar] = useState(false);
 
   const textAreaEditRef = useRef(null);
   const initialHeight = 32;
 
   const scrollBottomWithBtn = () => {
-    listRef.current.scrollTo({
-      top: listRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    if (listRef.current) {
+      listRef.current.scrollTo({
+        top: listRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
     setNewMsgs(false);
   };
 
@@ -67,44 +70,56 @@ export default function MessageList({
     }
   };
 
-  useEffect(() => {
+  // 1. CAPTURA: Detecta si debe bajar antes de que el DOM se actualice visualmente
+  useLayoutEffect(() => {
     const list = listRef.current;
     if (!list || mensajes.length === 0) return;
 
     const esCargaInicial = totalPrevio.current === 0;
     const esBorrado = mensajes.length < totalPrevio.current;
 
-    // 1. Si es borrado, ignoramos
-    if (esBorrado && !esCargaInicial) {
+    if (esBorrado) {
       totalPrevio.current = mensajes.length;
       return;
     }
 
-    // 2. CAPTURA INMEDIATA: ¿Estaba el usuario abajo JUSTO ANTES de procesar el nuevo mensaje?
-    // Usamos un margen un poco más grande (100px) para compensar el renderizado
-    const margin = 100;
-    const wasDown =
-      list.scrollTop + list.clientHeight >= list.scrollHeight - margin;
-
+    // Margen para detectar si el usuario está al final
+    const margin = 150; 
+    const wasDown = list.scrollTop + list.clientHeight >= list.scrollHeight - margin;
+    
     const lastMsg = mensajes[mensajes.length - 1];
     const mine = lastMsg?.user === username;
-    const other = !mine;
 
-    if (esCargaInicial || mine || (other && wasDown)) {
-      setTimeout(() => {
-        setNewMsgs(false);
-        list.scrollTo({
-          top: list.scrollHeight,
-          behavior: esCargaInicial ? "auto" : "smooth",
-        });
-      }, 30);
-    } else if (other && !wasDown) {
-      setTimeout(() => {setNewMsgs(true)}, 0);
+    if (esCargaInicial || mine || wasDown) {
+      setDeberiaBajar(true);
+      setNewMsgs(false);
+    } else {
+      setDeberiaBajar(false);
+      setNewMsgs(true);
     }
 
     totalPrevio.current = mensajes.length;
   }, [mensajes.length, username]);
 
+  // 2. ACCIÓN: Realiza el scroll cuando el nuevo mensaje ya está renderizado
+  useEffect(() => {
+    if (deberiaBajar && listRef.current) {
+      const list = listRef.current;
+      const esCargaInicial = totalPrevio.current <= 1;
+
+      const timeoutId = setTimeout(() => {
+        list.scrollTo({
+          top: list.scrollHeight,
+          behavior: esCargaInicial ? "auto" : "smooth",
+        });
+        setDeberiaBajar(false);
+      }, 60);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [deberiaBajar, mensajes.length]);
+
+  // 3. EFECTO DE ANIMACIÓN DE ENTRADA (TRADUCCIÓN)
   useEffect(() => {
     mensajes.forEach((m) => {
       const id = m._id || m.timestamp;
@@ -116,6 +131,7 @@ export default function MessageList({
     });
   }, [mensajes]);
 
+  // 4. AUTO-AJUSTE TEXTAREA EDICIÓN
   useEffect(() => {
     if (isToEdit && textAreaEditRef.current) {
       const textarea = textAreaEditRef.current;
@@ -220,7 +236,6 @@ export default function MessageList({
                 );
               }
 
-              // Por defecto: Texto normal
               return <p className="message-text fs-2 mb-half">{content}</p>;
             })()}
 

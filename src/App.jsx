@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import CryptoJS from "crypto-js";
 import UsernameForm from "./components/usernameForm/UsernameForm";
@@ -29,11 +29,36 @@ export default function App() {
   const [novedades, setNovedades] = useState([]);
   const [countsNovedades, setCountsNovedades] = useState({});
   const [isNotifications, setIsNotifications] = useState(() => {
+    // Verificamos si existe en el objeto window antes de usarlo
     if (typeof window !== "undefined" && "Notification" in window) {
       return Notification.permission === "granted";
     }
     return false;
   });
+  //refs para notis
+  const isNotificationsRef = useRef(isNotifications);
+  const selectedUserRef = useRef(selectedUser);
+  const usuariosGlobalesRef = useRef(usuariosGlobales);
+
+  useEffect(() => {
+    isNotificationsRef.current = isNotifications;
+  }, [isNotifications]);
+  useEffect(() => {
+    selectedUserRef.current = selectedUser;
+  }, [selectedUser]);
+  useEffect(() => {
+    usuariosGlobalesRef.current = usuariosGlobales;
+  }, [usuariosGlobales]);
+
+  //useEffect para el tipo de notf SW
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then(() => console.log("SW registrado con éxito"))
+        .catch((err) => console.error("Fallo al registrar SW:", err));
+    }
+  }, []);
 
   const pedirPermisoNotificaciones = async () => {
     if (!("Notification" in window)) {
@@ -95,6 +120,8 @@ export default function App() {
     setPassword("");
     setMyId("");
     setSelectedUser(null);
+    setNovedades([]);
+    setCountsNovedades({});
     socket.disconnect();
     socket.connect();
   };
@@ -233,57 +260,66 @@ export default function App() {
 
   // 6. MENSAJES NUEVOS
   useEffect(() => {
-    const handleMensajeNovedad = (msg) => {
+    const handleMensajeNovedad = async (msg) => {
       const esMio = String(msg.fromUserId) === String(myId);
 
       if (!esMio) {
-        const idSeleccionado = selectedUser
-          ? String(selectedUser._id)
-          : "Ninguno";
-        const esChatAbierto = idSeleccionado === String(msg.fromUserId);
+        const currentSelected = selectedUserRef.current;
+        const currentIsNotifications = isNotificationsRef.current;
+        const currentUsuarios = usuariosGlobalesRef.current;
+
+        const esChatAbierto =
+          currentSelected &&
+          String(currentSelected._id) === String(msg.fromUserId);
 
         if (!esChatAbierto) {
           setCountsNovedades((prev) => ({
             ...prev,
             [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1,
           }));
-          setNovedades((prev) => [...prev, msg.fromUserId]);
+          setNovedades((prev) => [...new Set([...prev, msg.fromUserId])]);
 
-          const permiso = Notification.permission;
-
-          if (permiso === "granted" && isNotifications) {
-            const usuarioMsg = usuariosGlobales.find(
+          if (Notification.permission === "granted" && currentIsNotifications) {
+            const usuarioMsg = currentUsuarios.find(
               (u) => String(u._id) === String(msg.fromUserId)
             );
+
             const titulo = "Just Message";
             const body = usuarioMsg
               ? `Tienes un mensaje de ${usuarioMsg.username}`
               : "Tienes un mensaje";
 
-            const avatarUsuario =
-              usuarioMsg?.avatar ||
-              "https://res.cloudinary.com/do0s2lutu/image/upload/v1766779509/user_l8spmu.png";
+            const avatarUsuario = usuarioMsg?.avatar || "/logo_chat_icon.png";
+            // Generamos un tag único POR MENSAJE para que Windows/Android no los agrupe
+            const uniqueTag = `msg-${msg._id || Date.now()}-${Math.random()}`;
 
             try {
-              const notif = new Notification(titulo, {
-                body: body,
+              const registration = await navigator.serviceWorker.ready;
+              await registration.showNotification(titulo, {
+                body,
                 icon: avatarUsuario,
+                tag: uniqueTag,
                 renotify: true,
-                tag: msg._id,
-                silent: false,
-                image: window.location.origin + "/public/logo_chat_icon.png",
+                badge: "/logo_chat_icon.png",
+                vibrate: [100, 50, 100],
+                data: {
+                  url: window.location.origin,
+                  userName: usuarioMsg?.username,
+                },
               });
-              console.log(notif);
-
+            } catch (error) {
+              // Fallback: Si el Service Worker no responde, usamos la API nativa
+              const notif = new Notification(titulo, {
+                body,
+                icon: avatarUsuario,
+                tag: uniqueTag,
+                renotify: true,
+              });
               notif.onclick = () => {
                 window.focus();
-                seleccionarChat(usuarioMsg);
+                if (usuarioMsg) seleccionarChat(usuarioMsg);
               };
-            } catch (error) {
-              console.error("Error al crear el objeto Notification:", error);
             }
-          } else {
-            console.warn("Permiso denegado o no solicitado");
           }
         }
       }
@@ -291,7 +327,7 @@ export default function App() {
 
     socket.on("mensaje", handleMensajeNovedad);
     return () => socket.off("mensaje", handleMensajeNovedad);
-  }, [myId, selectedUser, usuariosGlobales, isNotifications]);
+  }, [myId]);
 
   // 7. ESCUCHAR BORRADO PARA ACTUALIZAR CONTADORES
   useEffect(() => {
